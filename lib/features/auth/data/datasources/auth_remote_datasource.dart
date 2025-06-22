@@ -179,7 +179,11 @@ class AuthService {
       final response = await http.post(
         Uri.parse('$_baseUrl/forgot-password'),
         headers: {'Content-Type': 'application/json; charset=UTF-8'},
-        body: jsonEncode({'email': normalizedEmail}),
+        body: jsonEncode({
+          'email': normalizedEmail,
+          'reset_url':
+              'https://soffiasanchezz.github.io/SoftBee-Frontend/reset-password',
+        }),
       );
 
       final responseBody = jsonDecode(response.body);
@@ -188,16 +192,11 @@ class AuthService {
         return {
           'success': true,
           'message': responseBody['message'] ?? 'Correo enviado exitosamente',
-          'reset_url':
-              responseBody['reset_url'], // Asegúrate que el backend devuelva esto
         };
       } else {
         return {
           'success': false,
-          'message':
-              responseBody['error'] ??
-              responseBody['detail'] ??
-              'Error al enviar correo',
+          'message': responseBody['error'] ?? 'Error al enviar correo',
         };
       }
     } catch (e) {
@@ -208,7 +207,6 @@ class AuthService {
       };
     }
   }
-  
   // Resetear contraseña con token
   static Future<Map<String, dynamic>> resetPassword(
     String token,
