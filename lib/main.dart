@@ -23,17 +23,11 @@ class SoftBeeApp extends StatelessWidget {
         '/register': (context) => RegisterPage(),
         '/forgot-password': (context) => const ForgotPasswordPage(),
         '/reset-password': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments;
-          final String token;
-
-          if (args is String) {
-            token = args;
-          } else {
-            // Manejar el caso cuando se navega directamente sin token
-            final routeSettings = ModalRoute.of(context)?.settings;
-            final uri = Uri.parse(routeSettings?.name ?? '');
-            token = uri.queryParameters['token'] ?? '';
-          }
+          // Manejo tanto para web como para móvil
+          final uri = Uri.dataFromString(
+            ModalRoute.of(context)?.settings.name ?? '',
+          );
+          final token = uri.queryParameters['token'] ?? '';
 
           if (token.isEmpty) {
             return const ForgotPasswordPage();
