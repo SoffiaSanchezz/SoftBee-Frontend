@@ -184,32 +184,32 @@ class AuthService {
 
   static Future<Map<String, dynamic>> requestPasswordReset(String email) async {
     try {
-      final normalizedEmail = email.trim().toLowerCase();
-      _debugPrint("Solicitando reset de contraseña para: $normalizedEmail");
-
       final response = await http.post(
         Uri.parse('$_baseUrl/reset-password'),
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
-        body: jsonEncode({'email': normalizedEmail}),
-      );
-
-      _debugPrint(
-        "Respuesta de reset: ${response.statusCode} - ${response.body}",
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email.trim().toLowerCase()}),
       );
 
       final responseBody = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        return {'success': true, 'message': responseBody['message']};
+        return {
+          'success': true,
+          'message': responseBody['message'] ?? 
+            'Si el email está registrado, recibirás un correo con instrucciones'
+        };
       } else {
         return {
           'success': false,
-          'message': responseBody['detail'] ?? 'Error al enviar correo',
+          'message': responseBody['error'] ?? 
+            'Error al enviar el correo de recuperación'
         };
       }
     } catch (e) {
-      _debugPrint("Error en reset de contraseña: $e");
-      return {'success': false, 'message': 'Error de conexión: $e'};
+      return {
+        'success': false,
+        'message': 'Error de conexión: ${e.toString()}'
+      };
     }
   }
 
@@ -218,30 +218,32 @@ class AuthService {
     String newPassword,
   ) async {
     try {
-      _debugPrint("Reseteando contraseña con token: $token");
       final response = await http.post(
         Uri.parse('$_baseUrl/reset-password/$token'),
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
-        body: jsonEncode({'new_password': newPassword}),
-      );
-
-      _debugPrint(
-        "Respuesta de reset: ${response.statusCode} - ${response.body}",
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'new_password': newPassword.trim()}),
       );
 
       final responseBody = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        return {'success': true, 'message': responseBody['message']};
+        return {
+          'success': true,
+          'message': responseBody['message'] ?? 
+            'Contraseña actualizada exitosamente'
+        };
       } else {
         return {
           'success': false,
-          'message': responseBody['detail'] ?? 'Error al cambiar contraseña',
+          'message': responseBody['error'] ?? 
+            responseBody['detail'] ?? 'Error al cambiar contraseña'
         };
       }
     } catch (e) {
-      _debugPrint("Error al resetear contraseña: $e");
-      return {'success': false, 'message': 'Error de conexión: $e'};
+      return {
+        'success': false,
+        'message': 'Error de conexión: ${e.toString()}'
+      };
     }
   }
 

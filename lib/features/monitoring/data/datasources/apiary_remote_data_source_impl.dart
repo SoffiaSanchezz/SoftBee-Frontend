@@ -1,29 +1,23 @@
 import 'package:dio/dio.dart';
 import 'package:sotfbee/features/monitoring/data/datasources/apiary_remote_data_source.dart';
-import 'package:sotfbee/features/monitoring/data/models/apiary_model.dart';
+import 'package:sotfbee/features/monitoring/data/models/question_model.dart';
 
-class ApiaryRemoteDataSourceImpl implements ApiaryRemoteDataSource {
+class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
   final Dio dio;
 
-  ApiaryRemoteDataSourceImpl({required this.dio});
+  QuestionRemoteDataSourceImpl({required this.dio});
 
   @override
-  Future<List<ApiaryModel>> getUserApiaries(int userId) async {
+  Future<List<QuestionModel>> getApiaryQuestions(int apiaryId) async {
     try {
-      final response = await dio.get('/users/$userId/apiaries');
+      final response = await dio.get('/apiaries/$apiaryId/questions');
 
       if (response.statusCode == 200) {
-        if (response.data is List) {
-          return (response.data as List)
-              .map((json) => ApiaryModel.fromJson(json))
-              .toList();
-        } else if (response.data['empty'] == true) {
-          return [];
-        } else {
-          throw Exception('Formato de respuesta inesperado');
-        }
+        return (response.data as List)
+            .map((json) => QuestionModel.fromJson(json))
+            .toList();
       } else {
-        throw Exception('Error en la respuesta del servidor');
+        throw Exception('Error al obtener preguntas');
       }
     } on DioException catch (e) {
       throw Exception('Error de conexión: ${e.message}');

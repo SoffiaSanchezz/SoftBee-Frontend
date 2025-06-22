@@ -33,11 +33,16 @@ class SoftBeeApp extends StatelessWidget {
         '/register': (context) => RegisterPage(),
         '/menu': (context) => MenuScreen(),
         '/profile': (context) => UserProfilePage(),
-        '/forgot-password': (context)=> ForgotPasswordPage(),
+        '/forgot-password': (context) => const ForgotPasswordPage(),
         "/reset-password": (context) {
-          final uri = Uri.parse(ModalRoute.of(context)!.settings.name ?? '');
+          final routeSettings = ModalRoute.of(context)?.settings;
+          final uri = Uri.parse(routeSettings?.name ?? '');
           final token = uri.queryParameters['token'];
-          return token != null ? ResetPasswordPage(token: token) : LoginPage();
+
+          if (token == null || token.isEmpty) {
+            return const ForgotPasswordPage();
+          }
+          return ResetPasswordPage(token: token);
         },
       },
     );

@@ -27,17 +27,17 @@ Future<void> init() async {
       ),
   );
 
-  // Apiary Dependencies
-  getIt.registerLazySingleton<ApiaryRemoteDataSource>(
-    () => ApiaryRemoteDataSourceImpl(dio: getIt<Dio>()),
-  );
+  // // Apiary Dependencies
+  // getIt.registerLazySingleton<ApiaryRemoteDataSource>(
+  //   () => ApiaryRemoteDataSourceImpl(dio: getIt<Dio>()),
+  // );
 
-  getIt.registerLazySingleton<ApiaryRepository>(
-    () =>
-        ApiaryRepositoryImpl(remoteDataSource: getIt<ApiaryRemoteDataSource>()),
-  );
+  // getIt.registerLazySingleton<ApiaryRepository>(
+  //   () =>
+  //       ApiaryRepositoryImpl(remoteDataSource: getIt<ApiaryRemoteDataSource>()),
+  // );
 
-  getIt.registerLazySingleton(() => GetUserApiaries(getIt<ApiaryRepository>()));
+  // getIt.registerLazySingleton(() => GetUserApiaries(getIt<ApiaryRepository>()));
 
   // ... otras dependencias que ya tengas ...
 }
