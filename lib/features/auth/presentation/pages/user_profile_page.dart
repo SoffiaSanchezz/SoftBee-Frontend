@@ -14,7 +14,7 @@ class UserProfilePage extends StatefulWidget {
 }
 
 class _UserProfilePageState extends State<UserProfilePage> {
-  late UserProfile _userProfile;
+  UserProfile? _userProfile; // Cambiado a nullable
   bool _isLoading = true;
   bool _isEditing = false;
   bool _isPasswordEditing = false;
@@ -39,6 +39,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
   @override
   void initState() {
     super.initState();
+    // Inicializar controladores con valores vacíos
+    _nameController = TextEditingController();
+    _emailController = TextEditingController();
+    _phoneController = TextEditingController();
     _loadUserProfile();
   }
 
@@ -52,10 +56,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
       if (profile != null) {
         setState(() {
           _userProfile = profile;
-          _nameController = TextEditingController(text: profile.name);
-          _emailController = TextEditingController(text: profile.email);
-          _phoneController = TextEditingController(text: profile.phone);
+          _nameController.text = profile.name;
+          _emailController.text = profile.email;
+          _phoneController.text = profile.phone;
         });
+      } else {
+        throw Exception('No se pudo cargar el perfil de usuario');
       }
     } catch (e) {
       setState(() => _errorMessage = 'Error: $e');
@@ -66,17 +72,18 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
+    if (image != null && _userProfile != null) {
       setState(() {
         _selectedImage = File(image.path);
         _newImagePath =
-            'user_${_userProfile.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+            'user_${_userProfile!.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
       });
     }
   }
 
   Future<void> _updateProfilePicture() async {
-    if (_selectedImage == null || _newImagePath == null) return;
+    if (_selectedImage == null || _newImagePath == null || _userProfile == null)
+      return;
 
     final token = await AuthStorage.getToken();
     if (token == null) return;
@@ -95,7 +102,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     // 2. Actualizar la referencia en el perfil
     final updateResult = await AuthService.updateProfilePicture(
       token,
-      _userProfile.id,
+      _userProfile!.id,
       _newImagePath!,
     );
 
@@ -145,13 +152,17 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }
 
   Future<void> _updateProfile() async {
+    if (_userProfile == null) return;
+
     setState(() => _isLoading = true);
     try {
       final token = await AuthStorage.getToken();
       if (token == null) throw Exception('No autenticado');
 
       final response = await http.put(
-        Uri.parse('https://softbee-back-end.onrender.com/api/users/${_userProfile.id}'),
+        Uri.parse(
+          'https://softbee-back-end.onrender.com/api/users/${_userProfile!.id}',
+        ),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -234,10 +245,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
             icon: Icon(_isEditing ? Icons.cancel : Icons.edit),
             onPressed: () {
               setState(() {
-                if (_isEditing) {
-                  _nameController.text = _userProfile.name;
-                  _emailController.text = _userProfile.email;
-                  _phoneController.text = _userProfile.phone;
+                if (_isEditing && _userProfile != null) {
+                  _nameController.text = _userProfile!.name;
+                  _emailController.text = _userProfile!.email;
+                  _phoneController.text = _userProfile!.phone;
                 }
                 _isEditing = !_isEditing;
               });
@@ -249,6 +260,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
           ? Center(child: CircularProgressIndicator())
           : _errorMessage != null
           ? Center(child: Text(_errorMessage!))
+          : _userProfile == null
+          ? Center(child: Text('Perfil no disponible'))
           : SingleChildScrollView(
               padding: EdgeInsets.all(16.0),
               child: Column(
@@ -297,11 +310,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 radius: 60,
                 backgroundImage: _selectedImage != null
                     ? FileImage(_selectedImage!)
-                    : (_userProfile.profilePicture != 'default_profile.jpg'
+                    : (_userProfile!.profilePicture != 'default_profile.jpg'
                               ? NetworkImage(
-                                  'https://softbee-back-end.onrender.com/api/uploads/${_userProfile.profilePicture}',
+                                  'https://softbee-back-end.onrender.com/api/uploads/${_userProfile!.profilePicture}',
                                 )
-                              : AssetImage('assets/images/userSoftbee.png'))
+                              : AssetImage('images/userSoftbee.png'))
                           as ImageProvider,
               ),
               Container(
@@ -325,14 +338,14 @@ class _UserProfilePageState extends State<UserProfilePage> {
           ],
           SizedBox(height: 10),
           Text(
-            _userProfile.name,
+            _userProfile!.name,
             style: GoogleFonts.poppins(
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
           Text(
-            'Miembro desde ${_userProfile.createdAt.year}',
+            'Miembro desde ${_userProfile!.createdAt.year}',
             style: TextStyle(color: Colors.grey),
           ),
         ],
@@ -352,15 +365,15 @@ class _UserProfilePageState extends State<UserProfilePage> {
             _buildInfoRow('Teléfono', _phoneController, _isEditing),
             _buildReadOnlyInfo(
               'Fecha de Registro',
-              '${_userProfile.createdAt.day}/${_userProfile.createdAt.month}/${_userProfile.createdAt.year}',
+              '${_userProfile!.createdAt.day}/${_userProfile!.createdAt.month}/${_userProfile!.createdAt.year}',
             ),
-            if (_userProfile.apiaries.isNotEmpty) ...[
+            if (_userProfile!.apiaries.isNotEmpty) ...[
               SizedBox(height: 16),
               Text(
                 'Apiarios',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              ..._userProfile.apiaries
+              ..._userProfile!.apiaries
                   .map((apiary) => _buildApiaryCard(apiary))
                   .toList(),
             ],

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sotfbee/core/widgets/dashboard_menu.dart';
+import 'package:sotfbee/features/auth/presentation/pages/confirm_reset_page.dart';
 import 'package:sotfbee/features/auth/presentation/pages/login_page.dart';
 import 'package:sotfbee/features/auth/presentation/pages/register_page.dart';
+import 'package:sotfbee/features/auth/presentation/pages/reset_password_page.dart';
 import 'package:sotfbee/features/auth/presentation/pages/user_profile_page.dart';
 import 'package:sotfbee/features/onboarding/presentation/Landing_Page.dart';
 
@@ -31,6 +33,12 @@ class SoftBeeApp extends StatelessWidget {
         '/register': (context) => RegisterPage(),
         '/menu': (context) => MenuScreen(),
         '/profile': (context) => UserProfilePage(),
+        '/forgot-password': (context)=> ForgotPasswordPage(),
+        "/reset-password": (context) {
+          final uri = Uri.parse(ModalRoute.of(context)!.settings.name ?? '');
+          final token = uri.queryParameters['token'];
+          return token != null ? ResetPasswordPage(token: token) : LoginPage();
+        },
       },
     );
   }

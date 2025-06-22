@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lottie/lottie.dart';
 import 'package:sotfbee/core/widgets/dashboard_menu.dart';
 import 'package:sotfbee/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:sotfbee/features/auth/data/datasources/auth_remote_datasource.dart';
@@ -12,7 +11,7 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
+class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _identifierController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -20,9 +19,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   bool _isLoading = false;
   bool _isPasswordVisible = false;
   String? _errorMessage;
-
-  late AnimationController _backgroundController;
-  late AnimationController _pulseController;
 
   static const Color primaryYellow = Color(0xFFFFD100);
   static const Color accentYellow = Color(0xFFFFAB00);
@@ -33,14 +29,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _backgroundController = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    );
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    );
     _checkExistingToken();
   }
 
@@ -64,46 +52,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       _errorMessage = null;
     });
 
-    _backgroundController.repeat();
-    _pulseController.repeat(reverse: true);
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        child: Center(
-          child: Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.9),
-              boxShadow: [
-                BoxShadow(
-                  color: primaryYellow.withOpacity(0.4),
-                  blurRadius: 20,
-                  spreadRadius: 5,
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(25),
-              child: _isLoading
-                  ? Lottie.asset(
-                      'assets/animations/loader.json',
-                      width: 120,
-                      height: 120,
-                      fit: BoxFit.contain,
-                    )
-                  : Icon(Icons.check, color: primaryYellow, size: 60),
-            ),
-          ),
-        ),
-      ),
-    );
-
     try {
       final response = await AuthService.login(
         _identifierController.text.trim(),
@@ -114,28 +62,27 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         final token = response['token'];
         await AuthStorage.saveToken(token);
 
+        // Verificar token guardado
+        final savedToken = await AuthStorage.getToken();
+        debugPrint("Token guardado: $savedToken");
+
         if (mounted) {
-          Navigator.of(context).pop();
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) =>  MenuScreen()),
+            MaterialPageRoute(builder: (context) => MenuScreen()),
           );
         }
       } else {
         setState(() {
           _errorMessage = response['message'] ?? 'Error en el inicio de sesión';
         });
-        if (mounted) Navigator.of(context).pop();
       }
     } catch (e) {
       setState(() {
         _errorMessage = 'Error de conexión: ${e.toString()}';
       });
-      if (mounted) Navigator.of(context).pop();
     } finally {
       if (mounted) {
-        _backgroundController.stop();
-        _pulseController.stop();
         setState(() => _isLoading = false);
       }
     }
@@ -143,8 +90,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _backgroundController.dispose();
-    _pulseController.dispose();
     _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -236,7 +181,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                     ],
                   ),
                   child: Image.asset(
-                    'images/Logo.png',
+                    'assets/images/logo.png',
                     width: logoSize * 0.6,
                     height: logoSize * 0.6,
                     fit: BoxFit.contain,
@@ -482,8 +427,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.error_outline, color: Colors.red, size: 20),
-                  SizedBox(width: 8),
+                  const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       _errorMessage!,
@@ -529,7 +474,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
-              onPressed: () {},
+              onPressed: () {
+                ///resetPassword
+                Navigator.pushNamed(context, '/forgot-password');
+              },
               style: TextButton.styleFrom(foregroundColor: darkYellow),
               child: Text(
                 '¿Olvidaste tu contraseña?',
@@ -591,7 +539,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          labelStyle: TextStyle(color: darkYellow),
+          labelStyle: const TextStyle(color: darkYellow),
           prefixIcon: Icon(icon, color: primaryYellow),
           suffixIcon: isPassword
               ? IconButton(

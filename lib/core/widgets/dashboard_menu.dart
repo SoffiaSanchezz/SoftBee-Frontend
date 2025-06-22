@@ -280,7 +280,7 @@ class _EnhancedMenuScreenState extends State<MenuScreen>
                               ? NetworkImage(
                                   'https://softbee-back-end.onrender.com/uploads/${_userProfile!.profilePicture}',
                                 )
-                              : AssetImage('assets/images/userSoftbee.png')
+                              : AssetImage('images/userSoftbee.png')
                                     as ImageProvider,
                         ),
                       ),

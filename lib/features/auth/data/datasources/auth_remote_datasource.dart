@@ -1,6 +1,11 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'package:sotfbee/features/auth/data/models/user_model.dart';
+
+void _debugPrint(String message) {
+  developer.log(message, name: 'AuthService');
+}
 
 class AuthService {
   static const String _baseUrl = 'https://softbee-back-end.onrender.com/api';
@@ -10,6 +15,16 @@ class AuthService {
     String password,
   ) async {
     try {
+      // Determina si el identificador es email o username
+      final String fieldKey = identifier.contains('@') ? 'email' : 'username';
+
+      final Map<String, String> loginData = {
+        fieldKey: identifier.trim(),
+        'password': password.trim(),
+      };
+
+      _debugPrint("Enviando credenciales de login: ${jsonEncode(loginData)}");
+
       final response = await http
           .post(
             Uri.parse('$_baseUrl/login'),
@@ -17,20 +32,20 @@ class AuthService {
               'Content-Type': 'application/json; charset=UTF-8',
               'Accept': 'application/json',
             },
-            body: jsonEncode({
-              'identifier': identifier.trim(),
-              'password': password.trim(),
-            }),
+            body: jsonEncode(loginData),
           )
           .timeout(const Duration(seconds: 30));
+
+      _debugPrint(
+        "Respuesta de login: ${response.statusCode} - ${response.body}",
+      );
 
       final responseBody = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        final token = responseBody['token'];
         return {
           'success': true,
-          'token': token,
+          'token': responseBody['token'],
           'user_id': responseBody['user_id'],
           'username': responseBody['username'],
           'email': responseBody['email'],
@@ -39,10 +54,14 @@ class AuthService {
       } else {
         return {
           'success': false,
-          'message': responseBody['message'] ?? 'Error en el inicio de sesión',
+          'message':
+              responseBody['message'] ??
+              responseBody['error'] ??
+              'Error en el inicio de sesión',
         };
       }
     } catch (e) {
+      _debugPrint("Error en login: $e");
       return {
         'success': false,
         'message': 'Error de conexión: ${e.toString()}',
@@ -52,6 +71,7 @@ class AuthService {
 
   static Future<Map<String, dynamic>?> verifyToken(String token) async {
     try {
+      _debugPrint("Verificando token...");
       final response = await http.get(
         Uri.parse('$_baseUrl/me'),
         headers: {
@@ -60,17 +80,23 @@ class AuthService {
         },
       );
 
+      _debugPrint(
+        "Respuesta de verificación: ${response.statusCode} - ${response.body}",
+      );
+
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       }
       return null;
     } catch (e) {
+      _debugPrint("Error al verificar token: $e");
       return null;
     }
   }
 
   static Future<UserProfile?> getUserProfile(String token) async {
     try {
+      _debugPrint("Obteniendo perfil de usuario...");
       final response = await http.get(
         Uri.parse('$_baseUrl/users/me'),
         headers: {
@@ -79,12 +105,17 @@ class AuthService {
         },
       );
 
+      _debugPrint(
+        "Respuesta de perfil: ${response.statusCode} - ${response.body}",
+      );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return UserProfile.fromJson(data);
       }
       return null;
     } catch (e) {
+      _debugPrint("Error al obtener perfil: $e");
       return null;
     }
   }
@@ -98,18 +129,27 @@ class AuthService {
   ) async {
     try {
       final normalizedEmail = email.trim().toLowerCase();
+      final generatedUsername = generateUsername(normalizedEmail);
+
+      final requestBody = {
+        'nombre': name.trim(),
+        'username': generatedUsername,
+        'email': normalizedEmail,
+        'phone': phone.trim(),
+        'password': password.trim(),
+        'apiarios': apiaries,
+      };
+
+      _debugPrint("Enviando registro: ${jsonEncode(requestBody)}");
 
       final response = await http.post(
         Uri.parse('$_baseUrl/register'),
         headers: {'Content-Type': 'application/json; charset=UTF-8'},
-        body: jsonEncode({
-          'nombre': name,
-          'username': generateUsername(email),
-          'email': normalizedEmail,
-          'phone': phone,
-          'password': password,
-          'apiarios': apiaries,
-        }),
+        body: jsonEncode(requestBody),
+      );
+
+      _debugPrint(
+        "Respuesta de registro: ${response.statusCode} - ${response.body}",
       );
 
       final responseBody = jsonDecode(response.body);
@@ -128,22 +168,33 @@ class AuthService {
         };
       }
     } catch (e) {
+      _debugPrint("Error en registro: $e");
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
   }
 
   static String generateUsername(String email) {
-    return email.split('@').first.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+    final username = email
+        .split('@')
+        .first
+        .replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+    _debugPrint("Username generado: $username");
+    return username;
   }
 
   static Future<Map<String, dynamic>> requestPasswordReset(String email) async {
     try {
       final normalizedEmail = email.trim().toLowerCase();
+      _debugPrint("Solicitando reset de contraseña para: $normalizedEmail");
 
       final response = await http.post(
         Uri.parse('$_baseUrl/reset-password'),
         headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode({'email': normalizedEmail}),
+      );
+
+      _debugPrint(
+        "Respuesta de reset: ${response.statusCode} - ${response.body}",
       );
 
       final responseBody = jsonDecode(response.body);
@@ -157,6 +208,7 @@ class AuthService {
         };
       }
     } catch (e) {
+      _debugPrint("Error en reset de contraseña: $e");
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
   }
@@ -166,10 +218,15 @@ class AuthService {
     String newPassword,
   ) async {
     try {
+      _debugPrint("Reseteando contraseña con token: $token");
       final response = await http.post(
         Uri.parse('$_baseUrl/reset-password/$token'),
         headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode({'new_password': newPassword}),
+      );
+
+      _debugPrint(
+        "Respuesta de reset: ${response.statusCode} - ${response.body}",
       );
 
       final responseBody = jsonDecode(response.body);
@@ -183,6 +240,7 @@ class AuthService {
         };
       }
     } catch (e) {
+      _debugPrint("Error al resetear contraseña: $e");
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
   }
@@ -193,6 +251,7 @@ class AuthService {
     String token,
   ) async {
     try {
+      _debugPrint("Cambiando contraseña...");
       final response = await http.post(
         Uri.parse('$_baseUrl/change-password'),
         headers: {
@@ -200,9 +259,13 @@ class AuthService {
           'Content-Type': 'application/json; charset=UTF-8',
         },
         body: jsonEncode({
-          'current_password': currentPassword,
-          'new_password': newPassword,
+          'current_password': currentPassword.trim(),
+          'new_password': newPassword.trim(),
         }),
+      );
+
+      _debugPrint(
+        "Respuesta de cambio: ${response.statusCode} - ${response.body}",
       );
 
       if (response.statusCode == 200) {
@@ -211,6 +274,7 @@ class AuthService {
         return {'success': false, 'message': 'Error cambiando contraseña'};
       }
     } catch (e) {
+      _debugPrint("Error al cambiar contraseña: $e");
       return {'success': false, 'message': e.toString()};
     }
   }
@@ -221,6 +285,7 @@ class AuthService {
     String newImagePath,
   ) async {
     try {
+      _debugPrint("Actualizando foto de perfil...");
       final response = await http.put(
         Uri.parse('$_baseUrl/users/$userId/profile_picture'),
         headers: {
@@ -228,6 +293,10 @@ class AuthService {
           'Content-Type': 'application/json; charset=UTF-8',
         },
         body: jsonEncode({'profile_picture': newImagePath}),
+      );
+
+      _debugPrint(
+        "Respuesta de foto: ${response.statusCode} - ${response.body}",
       );
 
       if (response.statusCode == 200) {
@@ -239,7 +308,21 @@ class AuthService {
         };
       }
     } catch (e) {
+      _debugPrint("Error al actualizar foto: $e");
       return {'success': false, 'message': e.toString()};
+    }
+  }
+  
+  static Future<Map<String, dynamic>?> getUserData(String token) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/users/me'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) return json.decode(response.body);
+      return null;
+    } catch (e) {
+      return null;
     }
   }
 }
