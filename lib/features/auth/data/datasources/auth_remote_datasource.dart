@@ -17,7 +17,7 @@ class AuthService {
     try {
       // Determina si el identificador es email o username
       final String fieldKey = identifier.contains('@') ? 'email' : 'username';
-
+      
       final Map<String, String> loginData = {
         fieldKey: identifier.trim(),
         'password': password.trim(),
@@ -36,9 +36,7 @@ class AuthService {
           )
           .timeout(const Duration(seconds: 30));
 
-      _debugPrint(
-        "Respuesta de login: ${response.statusCode} - ${response.body}",
-      );
+      _debugPrint("Respuesta de login: ${response.statusCode} - ${response.body}");
 
       final responseBody = jsonDecode(response.body);
 
@@ -56,8 +54,8 @@ class AuthService {
           'success': false,
           'message':
               responseBody['message'] ??
-              responseBody['error'] ??
-              'Error en el inicio de sesión',
+                  responseBody['error'] ??
+                  'Error en el inicio de sesión',
         };
       }
     } catch (e) {
@@ -80,9 +78,7 @@ class AuthService {
         },
       );
 
-      _debugPrint(
-        "Respuesta de verificación: ${response.statusCode} - ${response.body}",
-      );
+      _debugPrint("Respuesta de verificación: ${response.statusCode} - ${response.body}");
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -105,9 +101,7 @@ class AuthService {
         },
       );
 
-      _debugPrint(
-        "Respuesta de perfil: ${response.statusCode} - ${response.body}",
-      );
+      _debugPrint("Respuesta de perfil: ${response.statusCode} - ${response.body}");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -148,9 +142,7 @@ class AuthService {
         body: jsonEncode(requestBody),
       );
 
-      _debugPrint(
-        "Respuesta de registro: ${response.statusCode} - ${response.body}",
-      );
+      _debugPrint("Respuesta de registro: ${response.statusCode} - ${response.body}");
 
       final responseBody = jsonDecode(response.body);
 
@@ -174,38 +166,41 @@ class AuthService {
   }
 
   static String generateUsername(String email) {
-    final username = email
-        .split('@')
-        .first
-        .replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+    final username = email.split('@').first.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
     _debugPrint("Username generado: $username");
     return username;
   }
 
   static Future<Map<String, dynamic>> requestPasswordReset(String email) async {
     try {
+      final normalizedEmail = email.trim().toLowerCase();
+      _debugPrint("Solicitando reset de contraseña para: $normalizedEmail");
+
       final response = await http.post(
-        Uri.parse('$_baseUrl/reset-password'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email.trim().toLowerCase()}),
+        Uri.parse('$_baseUrl/forgot-password'),
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        body: jsonEncode({'email': normalizedEmail}),
       );
+
+      _debugPrint("Respuesta de reset: ${response.statusCode} - ${response.body}");
 
       final responseBody = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
         return {
           'success': true,
-          'message': responseBody['message'] ?? 
-            'Si el email está registrado, recibirás un correo con instrucciones'
+          'message': responseBody['message'] ?? 'Correo enviado exitosamente'
         };
       } else {
         return {
           'success': false,
           'message': responseBody['error'] ?? 
-            'Error al enviar el correo de recuperación'
+                     responseBody['detail'] ?? 
+                     'Error al enviar correo'
         };
       }
     } catch (e) {
+      _debugPrint("Error en solicitud de reset: $e");
       return {
         'success': false,
         'message': 'Error de conexión: ${e.toString()}'
@@ -213,33 +208,49 @@ class AuthService {
     }
   }
 
+  // Resetear contraseña con token
   static Future<Map<String, dynamic>> resetPassword(
     String token,
     String newPassword,
   ) async {
     try {
+      _debugPrint("Reseteando contraseña con token: $token");
+      
+      if (newPassword.length < 8) {
+        return {
+          'success': false,
+          'message': 'La contraseña debe tener al menos 8 caracteres'
+        };
+      }
+
       final response = await http.post(
-        Uri.parse('$_baseUrl/reset-password/$token'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'new_password': newPassword.trim()}),
+        Uri.parse('$_baseUrl/reset-password'),
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        body: jsonEncode({
+          'token': token,
+          'new_password': newPassword,
+        }),
       );
+
+      _debugPrint("Respuesta de reset: ${response.statusCode} - ${response.body}");
 
       final responseBody = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
         return {
           'success': true,
-          'message': responseBody['message'] ?? 
-            'Contraseña actualizada exitosamente'
+          'message': responseBody['message'] ?? 'Contraseña actualizada exitosamente'
         };
       } else {
         return {
           'success': false,
           'message': responseBody['error'] ?? 
-            responseBody['detail'] ?? 'Error al cambiar contraseña'
+                    responseBody['detail'] ?? 
+                    'Error al cambiar contraseña'
         };
       }
     } catch (e) {
+      _debugPrint("Error al resetear contraseña: $e");
       return {
         'success': false,
         'message': 'Error de conexión: ${e.toString()}'
@@ -247,6 +258,7 @@ class AuthService {
     }
   }
 
+  // Cambiar contraseña (usuario autenticado)
   static Future<Map<String, dynamic>> changePassword(
     String currentPassword,
     String newPassword,
@@ -254,6 +266,14 @@ class AuthService {
   ) async {
     try {
       _debugPrint("Cambiando contraseña...");
+
+      if (newPassword.length < 8) {
+        return {
+          'success': false,
+          'message': 'La nueva contraseña debe tener al menos 8 caracteres',
+        };
+      }
+
       final response = await http.post(
         Uri.parse('$_baseUrl/change-password'),
         headers: {
@@ -271,9 +291,13 @@ class AuthService {
       );
 
       if (response.statusCode == 200) {
-        return {'success': true};
+        return {'success': true, 'message': 'Contraseña cambiada exitosamente'};
       } else {
-        return {'success': false, 'message': 'Error cambiando contraseña'};
+        final responseBody = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': responseBody['error'] ?? 'Error cambiando contraseña',
+        };
       }
     } catch (e) {
       _debugPrint("Error al cambiar contraseña: $e");
@@ -297,9 +321,7 @@ class AuthService {
         body: jsonEncode({'profile_picture': newImagePath}),
       );
 
-      _debugPrint(
-        "Respuesta de foto: ${response.statusCode} - ${response.body}",
-      );
+      _debugPrint("Respuesta de foto: ${response.statusCode} - ${response.body}");
 
       if (response.statusCode == 200) {
         return {'success': true};
@@ -312,19 +334,6 @@ class AuthService {
     } catch (e) {
       _debugPrint("Error al actualizar foto: $e");
       return {'success': false, 'message': e.toString()};
-    }
-  }
-  
-  static Future<Map<String, dynamic>?> getUserData(String token) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/users/me'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-      if (response.statusCode == 200) return json.decode(response.body);
-      return null;
-    } catch (e) {
-      return null;
     }
   }
 }
