@@ -34,5 +34,28 @@
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
+  <script>
+    window.addEventListener('load', function (ev) {
+      flutter_entrypoint({
+        onEntrypointLoaded: function (engine) {
+          // Manejo de rutas al cargar
+          function handleInitialRoute() {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#/')) {
+              const route = hash.substring(2); // Elimina el '#/'
+              engine._dispatchNavigation(route);
+            }
+          }
+
+          handleInitialRoute();
+
+          // Manejo de cambios en la URL
+          window.addEventListener('hashchange', function () {
+            handleInitialRoute();
+          });
+        }
+      });
+    });
+  </script>
 </body>
 </html>
