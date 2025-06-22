@@ -182,32 +182,33 @@ class AuthService {
         body: jsonEncode({'email': normalizedEmail}),
       );
 
-      _debugPrint("Respuesta de reset: ${response.statusCode} - ${response.body}");
-
       final responseBody = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
         return {
           'success': true,
-          'message': responseBody['message'] ?? 'Correo enviado exitosamente'
+          'message': responseBody['message'] ?? 'Correo enviado exitosamente',
+          'reset_url':
+              responseBody['reset_url'], // Asegúrate que el backend devuelva esto
         };
       } else {
         return {
           'success': false,
-          'message': responseBody['error'] ?? 
-                     responseBody['detail'] ?? 
-                     'Error al enviar correo'
+          'message':
+              responseBody['error'] ??
+              responseBody['detail'] ??
+              'Error al enviar correo',
         };
       }
     } catch (e) {
       _debugPrint("Error en solicitud de reset: $e");
       return {
         'success': false,
-        'message': 'Error de conexión: ${e.toString()}'
+        'message': 'Error de conexión: ${e.toString()}',
       };
     }
   }
-
+  
   // Resetear contraseña con token
   static Future<Map<String, dynamic>> resetPassword(
     String token,
