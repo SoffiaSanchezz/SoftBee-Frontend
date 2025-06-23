@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:sotfbee/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:sotfbee/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:sotfbee/features/auth/data/models/user_model.dart';
+import 'package:sotfbee/features/inventory/presentation/pages/inventory_management._page.dart';
 import 'package:sotfbee/features/monitoring/presentation/monitoreo_colmenas_page.dart';
 import 'package:sotfbee/features/onboarding/presentation/Landing_Page.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -34,6 +35,7 @@ class _EnhancedMenuScreenState extends State<MenuScreen>
       color: Color(0xFFFFA500),
       description: 'Gestiona el inventario de tu apiario',
       route: LandingPage(),
+      // InventoryManagementPage(apiaryId: _apiaryId!),
     ),
     MenuItemData(
       title: 'Informes',

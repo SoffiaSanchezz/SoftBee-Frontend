@@ -182,7 +182,7 @@ class AuthService {
         body: jsonEncode({
           'email': normalizedEmail,
           'reset_url':
-              'https://soffiasanchezz.github.io/SoftBee-Frontend/reset-password',
+              'https://soffiasanchezz.github.io/SoftBee-Frontend/reset-password?token={token]',
         }),
       );
 

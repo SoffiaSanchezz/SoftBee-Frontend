@@ -22,37 +22,37 @@ class _MonitoreoColmenasState extends State<MonitoreoColmenas> {
   @override
   void initState() {
     super.initState();
-    _loadApiaries();
+    // _loadApiaries();
   }
 
-  Future<void> _loadApiaries() async {
-    try {
-      // Obtener el ID del usuario actual (ejemplo)
-      final userId = await _getCurrentUserId();
+  // Future<void> _loadApiaries() async {
+  //   try {
+  //     // Obtener el ID del usuario actual (ejemplo)
+  //     final userId = await _getCurrentUserId();
       
-      final getApiaries = getIt<GetUserApiaries>();
-      final apiariesList = await getApiaries(userId);
+  //     final getApiaries = getIt<GetUserApiaries>();
+  //     final apiariesList = await getApiaries(userId);
 
-      setState(() {
-        apiaries = apiariesList;
-        if (apiariesList.isNotEmpty) {
-          selectedApiary = apiariesList.first;
-        }
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        errorMessage = e.toString();
-        isLoading = false;
-      });
-    }
-  }
+  //     setState(() {
+  //       apiaries = apiariesList;
+  //       if (apiariesList.isNotEmpty) {
+  //         selectedApiary = apiariesList.first;
+  //       }
+  //       isLoading = false;
+  //     });
+  //   } catch (e) {
+  //     setState(() {
+  //       errorMessage = e.toString();
+  //       isLoading = false;
+  //     });
+  //   }
+  // }
 
-  Future<int> _getCurrentUserId() async {
-    // TODO: Implementar lógica para obtener el ID del usuario actual
-    // Por ahora, retornamos un ID fijo de ejemplo
-    return 1;
-  }
+  // Future<int> _getCurrentUserId() async {
+  //   // TODO: Implementar lógica para obtener el ID del usuario actual
+  //   // Por ahora, retornamos un ID fijo de ejemplo
+  //   return 1;
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -218,14 +218,14 @@ class _MonitoreoColmenasState extends State<MonitoreoColmenas> {
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _loadApiaries,
-              child: Text('Reintentar'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber[700],
-                foregroundColor: Colors.white,
-              ),
-            ),
+            // ElevatedButton(
+            //   onPressed: _loadApiaries,
+            //   child: Text('Reintentar'),
+            //   style: ElevatedButton.styleFrom(
+            //     backgroundColor: Colors.amber[700],
+            //     foregroundColor: Colors.white,
+            //   ),
+            // ),
           ],
         ),
       ),
