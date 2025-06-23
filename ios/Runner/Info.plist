@@ -5,6 +5,12 @@
     <!-- PERMISO PARA ACCESO A LA BIBLIOTECA DE FOTOS -->
     <key>NSPhotoLibraryUsageDescription</key>
     <string>Para seleccionar una foto de perfil</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Necesitamos tu ubicación para mostrar los apiarios cercanos</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Esta aplicación quiere usar el reconocimiento de voz</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Esta aplicación quiere usar el micrófono</string>	
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

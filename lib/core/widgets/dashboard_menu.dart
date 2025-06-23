@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:sotfbee/features/admin/history/presentation/inspection_history.dart';
+import 'package:sotfbee/features/admin/inventory/presentation/inventory_management_page.dart';
+import 'package:sotfbee/features/admin/monitoring/presentation/enhanced_monitoreo_page.dart';
+import 'package:sotfbee/features/admin/reports/presentation/dashboard_reports_page.dart';
 import 'package:sotfbee/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:sotfbee/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:sotfbee/features/auth/data/models/user_model.dart';
-import 'package:sotfbee/features/inventory/presentation/pages/inventory_management._page.dart';
-import 'package:sotfbee/features/monitoring/presentation/monitoreo_colmenas_page.dart';
 import 'package:sotfbee/features/onboarding/presentation/Landing_Page.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -27,14 +29,15 @@ class _EnhancedMenuScreenState extends State<MenuScreen>
       icon: Icons.monitor,
       color: Color(0xFFFBC209),
       description: 'Supervisa el estado de tus colmenas en tiempo real',
-      route: MonitoreoColmenas(),
+      route: EnhancedMonitoreoScreen()
+      //MonitoreoColmenas(),
     ),
     MenuItemData(
       title: 'Inventario',
       icon: Icons.inventory,
       color: Color(0xFFFFA500),
       description: 'Gestiona el inventario de tu apiario',
-      route: LandingPage(),
+      route: GestionInventarioUpdated(),
       // InventoryManagementPage(apiaryId: _apiaryId!),
     ),
     MenuItemData(
@@ -42,14 +45,14 @@ class _EnhancedMenuScreenState extends State<MenuScreen>
       icon: Icons.insert_chart,
       color: Color(0xFFFFB700),
       description: 'Genera reportes detallados de producción',
-      route: LandingPage(),
+      route: DashboardScreen(),
     ),
     MenuItemData(
       title: 'Historial',
       icon: Icons.history,
       color: Color(0xFFFF9800),
       description: 'Revisa el historial de inspecciones',
-      route: LandingPage(),
+      route: HistorialInspeccionesScreenModified(),
     ),
   ];
 

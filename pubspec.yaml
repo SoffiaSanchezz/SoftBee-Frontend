@@ -43,7 +43,6 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
   dio: ^5.4.2
   get_it: ^7.6.4
   image_picker: ^0.8.7+3
@@ -55,6 +54,23 @@ dev_dependencies:
   equatable: ^2.0.5
   intl: ^0.18.1
   dartz: ^0.10.1
+  uuid: ^4.0.0
+  flutter_tts: ^3.8.5
+  speech_to_text: ^6.1.1
+  fuzzywuzzy: ^0.2.0
+  path_provider: ^2.1.1
+  permission_handler: ^10.2.0
+  sound_stream: ^0.4.0
+  sqflite: ^2.2.8
+  path: ^1.8.3
+  audioplayers: ^5.2.1
+  wakelock: ^0.4.0
+  flutter_displaymode: ^0.6.0
+  connectivity_plus: ^5.0.2
+  just_audio: ^0.9.36
+  audio_session: ^0.1.16
+  flutter_secure_storage: ^9.2.4
+  shared_preferences: ^2.2.2
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
