@@ -2,26 +2,30 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:sotfbee/features/admin/monitoring/models/model.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../models/model.dart';
+
 import 'api_service.dart';
 import 'local_db_service.dart';
 
-class EnhancedVoiceAssistantService {
+class VoiceAssistantService {
   final FlutterTts tts = FlutterTts();
   final stt.SpeechToText speech = stt.SpeechToText();
   final LocalDBService dbService = LocalDBService();
-  
+
   bool isListening = false;
   bool isActive = false;
   bool isInitialized = false;
   String lastRecognized = '';
-  
-  StreamController<String> speechResultsController = StreamController<String>.broadcast();
-  StreamController<String> statusController = StreamController<String>.broadcast();
-  StreamController<bool> listeningController = StreamController<bool>.broadcast();
+
+  StreamController<String> speechResultsController =
+      StreamController<String>.broadcast();
+  StreamController<String> statusController =
+      StreamController<String>.broadcast();
+  StreamController<bool> listeningController =
+      StreamController<bool>.broadcast();
 
   // Estados del flujo de monitoreo
   String currentMessage = '';
@@ -38,35 +42,28 @@ class EnhancedVoiceAssistantService {
   static const String wakeWord = "maya";
   static const List<String> activationPhrases = [
     "maya inicia monitoreo",
-    "maya iniciar monitoreo", 
+    "maya iniciar monitoreo",
     "maya comenzar monitoreo",
     "maya empezar monitoreo",
     "hola maya",
-    "maya ayuda"
+    "maya ayuda",
   ];
 
   Future<void> initialize() async {
     if (isInitialized) return;
 
     try {
-      // Solicitar permisos
       await _requestPermissions();
-      
-      // Configurar TTS
       await _configureTTS();
-      
-      // Inicializar Speech Recognition
       await _initializeSpeech();
-      
-      // Cargar datos iniciales
       await _loadInitialData();
-      
+
       isInitialized = true;
       _updateStatus("Maya inicializada correctamente");
-      
-      // Saludo inicial
-      await speak("Hola, soy Maya, tu asistente de monitoreo de colmenas. Puedes activarme diciendo 'Maya, inicia monitoreo' o presionando el botón de micrófono.");
-      
+
+      await speak(
+        "Hola, soy Maya, tu asistente de monitoreo de colmenas. Puedes activarme diciendo 'Maya, inicia monitoreo'.",
+      );
     } catch (e) {
       debugPrint("❌ Error al inicializar Maya: $e");
       _updateStatus("Error al inicializar Maya: $e");
@@ -90,7 +87,6 @@ class EnhancedVoiceAssistantService {
       await tts.setEngine("com.google.android.tts");
     }
 
-    // Configurar callbacks
     tts.setStartHandler(() {
       debugPrint("🤖 Maya comenzó a hablar");
     });
@@ -109,7 +105,7 @@ class EnhancedVoiceAssistantService {
       onStatus: (status) {
         debugPrint("📢 Estado del reconocimiento: $status");
         _updateListeningState(status == 'listening');
-        
+
         if (status == 'done' || status == 'notListening') {
           isListening = false;
           listeningController.add(false);
@@ -130,36 +126,33 @@ class EnhancedVoiceAssistantService {
 
   Future<void> _loadInitialData() async {
     try {
-      // Cargar desde base de datos local primero
       apiarios = await dbService.getApiarios();
-      
-      // Intentar sincronizar con servidor si hay conexión
+
       if (await ApiService.hasInternetConnection()) {
         try {
           final serverApiarios = await ApiService.obtenerApiarios();
-          // Actualizar base de datos local con datos del servidor
           for (final apiario in serverApiarios) {
             await dbService.insertApiario(apiario);
           }
           apiarios = serverApiarios;
         } catch (e) {
-          debugPrint("⚠️ No se pudo sincronizar con servidor, usando datos locales");
+          debugPrint(
+            "⚠️ No se pudo sincronizar con servidor, usando datos locales",
+          );
         }
       }
-      
+
       debugPrint("✅ Cargados ${apiarios.length} apiarios");
     } catch (e) {
       debugPrint("❌ Error al cargar datos iniciales: $e");
     }
   }
 
-  // ==================== ACTIVACIÓN POR VOZ ====================
-  
   Future<void> startPassiveListening() async {
     if (!isInitialized) await initialize();
-    
+
     _updateStatus("Maya en modo pasivo - Di 'Maya, inicia monitoreo'");
-    
+
     while (!isActive) {
       try {
         final result = await _listenForWakeWord();
@@ -167,8 +160,7 @@ class EnhancedVoiceAssistantService {
           await _activateAssistant();
           break;
         }
-        
-        // Pausa antes del siguiente ciclo
+
         await Future.delayed(Duration(seconds: 2));
       } catch (e) {
         debugPrint("❌ Error en escucha pasiva: $e");
@@ -201,7 +193,6 @@ class EnhancedVoiceAssistantService {
         localeId: 'es_ES',
       );
 
-      // Timeout
       Timer(Duration(seconds: 4), () {
         if (!completer.isCompleted) {
           isListening = false;
@@ -219,20 +210,20 @@ class EnhancedVoiceAssistantService {
 
   bool _isActivationPhrase(String text) {
     text = text.toLowerCase().trim();
-    
-    // Verificar frases de activación exactas
+
     for (final phrase in activationPhrases) {
       if (text.contains(phrase) || ratio(phrase, text) > 75) {
         return true;
       }
     }
-    
-    // Verificar palabra de activación + comando
-    if (text.contains(wakeWord) && 
-        (text.contains("monitoreo") || text.contains("ayuda") || text.contains("hola"))) {
+
+    if (text.contains(wakeWord) &&
+        (text.contains("monitoreo") ||
+            text.contains("ayuda") ||
+            text.contains("hola"))) {
       return true;
     }
-    
+
     return false;
   }
 
@@ -242,22 +233,20 @@ class EnhancedVoiceAssistantService {
     await startMonitoringFlow();
   }
 
-  // ==================== FLUJO DE MONITOREO MEJORADO ====================
-  
   Future<void> startMonitoringFlow() async {
     try {
       isActive = true;
       _updateStatus("Maya activada - Iniciando monitoreo");
-      
-      // Limpiar estado anterior
+
       respuestas.clear();
       selectedApiario = null;
       selectedColmena = null;
       currentQuestionIndex = 0;
-      
-      await speak("Iniciando el monitoreo de colmenas. Primero necesito que selecciones un apiario.");
+
+      await speak(
+        "Iniciando el monitoreo de colmenas. Primero necesito que selecciones un apiario.",
+      );
       await _selectApiario();
-      
     } catch (e) {
       debugPrint("❌ Error en flujo de monitoreo: $e");
       await speak("Ha ocurrido un error. Por favor, intenta de nuevo.");
@@ -267,17 +256,20 @@ class EnhancedVoiceAssistantService {
 
   Future<void> _selectApiario() async {
     if (apiarios.isEmpty) {
-      await speak("No hay apiarios disponibles. Por favor, configura al menos un apiario primero.");
+      await speak(
+        "No hay apiarios disponibles. Por favor, configura al menos un apiario primero.",
+      );
       await stopAssistant();
       return;
     }
 
     final apiarioNames = apiarios.map((a) => a.nombre).join(', ');
-    final message = "Apiarios disponibles: $apiarioNames. ¿Cuál quieres monitorear?";
-    
+    final message =
+        "Apiarios disponibles: $apiarioNames. ¿Cuál quieres monitorear?";
+
     _updateStatus("Seleccionando apiario...");
     await speak(message);
-    
+
     final response = await listen(duration: 6);
     if (response.isNotEmpty) {
       await _processApiarioSelection(response);
@@ -297,8 +289,7 @@ class EnhancedVoiceAssistantService {
         bestScore = score;
         matchedApiario = apiario;
       }
-      
-      // También verificar si el texto contiene el nombre del apiario
+
       if (text.toLowerCase().contains(apiario.nombre.toLowerCase())) {
         matchedApiario = apiario;
         break;
@@ -309,12 +300,13 @@ class EnhancedVoiceAssistantService {
       selectedApiario = matchedApiario;
       _updateStatus("Apiario seleccionado: ${matchedApiario.nombre}");
       await speak("Perfecto, has seleccionado ${matchedApiario.nombre}.");
-      
-      // Cargar colmenas del apiario
+
       await _loadColmenas();
       await _selectColmena();
     } else {
-      await speak("No reconocí ese apiario. Los disponibles son: ${apiarios.map((a) => a.nombre).join(', ')}. ¿Cuál eliges?");
+      await speak(
+        "No reconocí ese apiario. Los disponibles son: ${apiarios.map((a) => a.nombre).join(', ')}. ¿Cuál eliges?",
+      );
       final response = await listen(duration: 6);
       if (response.isNotEmpty) {
         await _processApiarioSelection(response);
@@ -324,10 +316,12 @@ class EnhancedVoiceAssistantService {
 
   Future<void> _loadColmenas() async {
     if (selectedApiario == null) return;
-    
+
     try {
       colmenas = await dbService.getColmenasByApiario(selectedApiario!.id);
-      debugPrint("✅ Cargadas ${colmenas.length} colmenas para apiario ${selectedApiario!.nombre}");
+      debugPrint(
+        "✅ Cargadas ${colmenas.length} colmenas para apiario ${selectedApiario!.nombre}",
+      );
     } catch (e) {
       debugPrint("❌ Error al cargar colmenas: $e");
       colmenas = [];
@@ -336,17 +330,22 @@ class EnhancedVoiceAssistantService {
 
   Future<void> _selectColmena() async {
     if (colmenas.isEmpty) {
-      await speak("No hay colmenas disponibles en este apiario. Por favor, configura al menos una colmena.");
+      await speak(
+        "No hay colmenas disponibles en este apiario. Por favor, configura al menos una colmena.",
+      );
       await stopAssistant();
       return;
     }
 
-    final colmenaNumbers = colmenas.map((c) => c.numeroColmena.toString()).join(', ');
-    final message = "Colmenas disponibles: $colmenaNumbers. ¿Cuál quieres inspeccionar?";
-    
+    final colmenaNumbers = colmenas
+        .map((c) => c.numeroColmena.toString())
+        .join(', ');
+    final message =
+        "Colmenas disponibles: $colmenaNumbers. ¿Cuál quieres inspeccionar?";
+
     _updateStatus("Seleccionando colmena...");
     await speak(message);
-    
+
     final response = await listen(duration: 5);
     if (response.isNotEmpty) {
       await _processColmenaSelection(response);
@@ -357,19 +356,25 @@ class EnhancedVoiceAssistantService {
   }
 
   Future<void> _processColmenaSelection(String text) async {
-    final numeroColmena = palabrasANumero(text) ?? int.tryParse(text.replaceAll(RegExp(r'[^0-9]'), ''));
+    final numeroColmena =
+        palabrasANumero(text) ??
+        int.tryParse(text.replaceAll(RegExp(r'[^0-9]'), ''));
 
-    if (numeroColmena != null && colmenas.any((c) => c.numeroColmena == numeroColmena)) {
+    if (numeroColmena != null &&
+        colmenas.any((c) => c.numeroColmena == numeroColmena)) {
       selectedColmena = numeroColmena;
       _updateStatus("Colmena $numeroColmena seleccionada");
       await speak("Excelente, vamos a inspeccionar la colmena $numeroColmena.");
-      
-      // Cargar preguntas y comenzar monitoreo
+
       await _loadQuestions();
       await _startQuestionFlow();
     } else {
-      final availableNumbers = colmenas.map((c) => c.numeroColmena.toString()).join(', ');
-      await speak("Número de colmena no válido. Las disponibles son: $availableNumbers. ¿Cuál eliges?");
+      final availableNumbers = colmenas
+          .map((c) => c.numeroColmena.toString())
+          .join(', ');
+      await speak(
+        "Número de colmena no válido. Las disponibles son: $availableNumbers. ¿Cuál eliges?",
+      );
       final response = await listen(duration: 5);
       if (response.isNotEmpty) {
         await _processColmenaSelection(response);
@@ -380,21 +385,27 @@ class EnhancedVoiceAssistantService {
   Future<void> _loadQuestions() async {
     try {
       if (selectedApiario != null) {
-        // Intentar cargar preguntas del servidor
         if (await ApiService.hasInternetConnection()) {
           try {
-            preguntasActivas = await ApiService.obtenerPreguntasApiario(selectedApiario!.id);
+            preguntasActivas = await ApiService.obtenerPreguntasApiario(
+              selectedApiario!.id,
+            );
           } catch (e) {
             debugPrint("⚠️ Error al cargar preguntas del servidor: $e");
           }
         }
-        
-        // Si no hay preguntas del servidor, usar preguntas por defecto
+
+        if (preguntasActivas.isEmpty) {
+          preguntasActivas = await dbService.getPreguntasByApiario(
+            selectedApiario!.id,
+          );
+        }
+
         if (preguntasActivas.isEmpty) {
           preguntasActivas = await _getDefaultQuestions();
         }
       }
-      
+
       debugPrint("✅ Cargadas ${preguntasActivas.length} preguntas");
     } catch (e) {
       debugPrint("❌ Error al cargar preguntas: $e");
@@ -454,7 +465,9 @@ class EnhancedVoiceAssistantService {
   Future<void> _startQuestionFlow() async {
     currentQuestionIndex = 0;
     _updateStatus("Iniciando preguntas de monitoreo");
-    await speak("Perfecto. Ahora te haré ${preguntasActivas.length} preguntas sobre la colmena. Responde con claridad.");
+    await speak(
+      "Perfecto. Ahora te haré ${preguntasActivas.length} preguntas sobre la colmena. Responde con claridad.",
+    );
     await Future.delayed(Duration(milliseconds: 1000));
     await _askCurrentQuestion();
   }
@@ -466,21 +479,32 @@ class EnhancedVoiceAssistantService {
     }
 
     final pregunta = preguntasActivas[currentQuestionIndex];
-    String questionText = "Pregunta ${currentQuestionIndex + 1}: ${pregunta.texto}";
+    String questionText =
+        "Pregunta ${currentQuestionIndex + 1}: ${pregunta.texto}";
 
     if (pregunta.tipoRespuesta == 'opciones' && pregunta.opciones != null) {
-      final opciones = pregunta.opciones!.asMap().entries.map((entry) {
-        return "${entry.key + 1} para ${entry.value.valor}";
-      }).join(', ');
-      questionText += ". Las opciones son: $opciones. Responde con el número de la opción.";
+      final opciones = pregunta.opciones!
+          .asMap()
+          .entries
+          .map((entry) {
+            return "${entry.key + 1} para ${entry.value.valor}";
+          })
+          .join(', ');
+      questionText +=
+          ". Las opciones son: $opciones. Responde con el número de la opción.";
     } else if (pregunta.tipoRespuesta == 'numero') {
-      questionText += ". Responde con un número entre ${pregunta.min ?? 0} y ${pregunta.max ?? 100}.";
+      questionText +=
+          ". Responde con un número entre ${pregunta.min ?? 0} y ${pregunta.max ?? 100}.";
     }
 
-    _updateStatus("Pregunta ${currentQuestionIndex + 1} de ${preguntasActivas.length}");
+    _updateStatus(
+      "Pregunta ${currentQuestionIndex + 1} de ${preguntasActivas.length}",
+    );
     await speak(questionText);
-    
-    final response = await listen(duration: pregunta.tipoRespuesta == 'texto' ? 8 : 6);
+
+    final response = await listen(
+      duration: pregunta.tipoRespuesta == 'texto' ? 8 : 6,
+    );
     if (response.isNotEmpty) {
       await _processQuestionResponse(response);
     } else {
@@ -493,23 +517,28 @@ class EnhancedVoiceAssistantService {
     final pregunta = preguntasActivas[currentQuestionIndex];
     final respuestaMap = <String, dynamic>{};
 
-    bool respuestaValida = procesarRespuestaPregunta(pregunta, text, 1, respuestaMap);
+    bool respuestaValida = procesarRespuestaPregunta(
+      pregunta,
+      text,
+      1,
+      respuestaMap,
+    );
 
     if (respuestaValida) {
       final respuesta = MonitoreoRespuesta(
         preguntaId: pregunta.id,
         preguntaTexto: pregunta.texto,
         respuesta: respuestaMap['respuesta'],
+        tipoRespuesta: pregunta.tipoRespuesta,
+        fechaRespuesta: DateTime.now(),
       );
 
       respuestas.add(respuesta);
-      
-      // Confirmación de la respuesta
+
       await speak("Registrado: ${respuesta.respuesta}");
-      
+
       currentQuestionIndex++;
-      
-      // Pausa breve antes de la siguiente pregunta
+
       await Future.delayed(Duration(milliseconds: 800));
       await _askCurrentQuestion();
     } else {
@@ -521,22 +550,25 @@ class EnhancedVoiceAssistantService {
 
   Future<void> _showSummary() async {
     String summary = "Hemos terminado las preguntas. Aquí está el resumen: ";
-    
+
     for (int i = 0; i < respuestas.length; i++) {
       final resp = respuestas[i];
       summary += "${resp.preguntaTexto}: ${resp.respuesta}. ";
     }
-    
-    summary += "¿Los datos son correctos? Di 'confirmar' para guardar o 'repetir' para volver a empezar.";
-    
+
+    summary +=
+        "¿Los datos son correctos? Di 'confirmar' para guardar o 'repetir' para volver a empezar.";
+
     _updateStatus("Mostrando resumen");
     await speak(summary);
-    
+
     final response = await listen(duration: 6);
     if (response.isNotEmpty) {
       await _processFinalConfirmation(response);
     } else {
-      await speak("No escuché tu respuesta. ¿Confirmas los datos o quieres repetir?");
+      await speak(
+        "No escuché tu respuesta. ¿Confirmas los datos o quieres repetir?",
+      );
       final retryResponse = await listen(duration: 5);
       if (retryResponse.isNotEmpty) {
         await _processFinalConfirmation(retryResponse);
@@ -547,14 +579,17 @@ class EnhancedVoiceAssistantService {
   Future<void> _processFinalConfirmation(String text) async {
     if (confirmacionReconocida(text, 'confirmar')) {
       await _saveMonitoringData();
-    } else if (confirmacionReconocida(text, 'repetir') || confirmacionReconocida(text, 'cancelar')) {
+    } else if (confirmacionReconocida(text, 'repetir') ||
+        confirmacionReconocida(text, 'cancelar')) {
       await speak("De acuerdo, vamos a repetir el monitoreo.");
       respuestas.clear();
       currentQuestionIndex = 0;
       await Future.delayed(Duration(milliseconds: 1000));
       await _startQuestionFlow();
     } else {
-      await speak("No entendí. Di 'confirmar' para guardar los datos o 'repetir' para empezar de nuevo.");
+      await speak(
+        "No entendí. Di 'confirmar' para guardar los datos o 'repetir' para empezar de nuevo.",
+      );
       final response = await listen(duration: 5);
       if (response.isNotEmpty) {
         await _processFinalConfirmation(response);
@@ -570,7 +605,7 @@ class EnhancedVoiceAssistantService {
 
     try {
       _updateStatus("Guardando datos...");
-      
+
       final data = {
         'colmena': selectedColmena,
         'id_apiario': selectedApiario!.id,
@@ -578,25 +613,27 @@ class EnhancedVoiceAssistantService {
         'respuestas': respuestas.map((r) => r.toJson()).toList(),
       };
 
-      // Guardar localmente primero
       final monitoreoId = await dbService.saveMonitoreo(data);
       if (monitoreoId > 0) {
         await dbService.saveRespuestas(monitoreoId, respuestas);
-        
-        await speak("¡Excelente! Los datos han sido guardados correctamente. El monitoreo de la colmena $selectedColmena está completo.");
-        
-        // Intentar sincronizar con servidor en segundo plano
+
+        await speak(
+          "¡Excelente! Los datos han sido guardados correctamente. El monitoreo de la colmena $selectedColmena está completo.",
+        );
+
         _syncInBackground();
-        
+
         _updateStatus("Monitoreo completado exitosamente");
       } else {
         throw Exception('Error al guardar en base de datos local');
       }
     } catch (e) {
       debugPrint("❌ Error al guardar monitoreo: $e");
-      await speak("Ha ocurrido un error al guardar los datos. Los datos se han guardado localmente y se sincronizarán cuando haya conexión.");
+      await speak(
+        "Ha ocurrido un error al guardar los datos. Los datos se han guardado localmente y se sincronizarán cuando haya conexión.",
+      );
     }
-    
+
     await stopAssistant();
   }
 
@@ -605,8 +642,9 @@ class EnhancedVoiceAssistantService {
       if (await ApiService.hasInternetConnection()) {
         final pendientes = await dbService.getMonitoreosPendientes();
         if (pendientes.isNotEmpty) {
-          // Aquí implementarías la sincronización con el servidor
-          debugPrint("🔄 Sincronizando ${pendientes.length} monitoreos pendientes...");
+          debugPrint(
+            "🔄 Sincronizando ${pendientes.length} monitoreos pendientes...",
+          );
         }
       }
     } catch (e) {
@@ -614,8 +652,6 @@ class EnhancedVoiceAssistantService {
     }
   }
 
-  // ==================== MÉTODOS DE UTILIDAD ====================
-  
   Future<void> speak(String text) async {
     try {
       await tts.awaitSpeakCompletion(true);
@@ -680,38 +716,95 @@ class EnhancedVoiceAssistantService {
     const umbralSimilitud = 70;
 
     final variaciones = {
-      'confirmar': ['confirmar', 'confirma', 'confirmo', 'confirmado', 'conforme', 'sí', 'si', 'vale', 'ok', 'okay', 'correcto', 'exacto', 'perfecto'],
-      'cancelar': ['cancelar', 'cancela', 'cancelado', 'cancelo', 'no', 'incorrecto', 'mal', 'error'],
-      'repetir': ['repetir', 'repite', 'otra vez', 'de nuevo', 'nuevamente', 'empezar', 'comenzar'],
+      'confirmar': [
+        'confirmar',
+        'confirma',
+        'confirmo',
+        'confirmado',
+        'conforme',
+        'sí',
+        'si',
+        'vale',
+        'ok',
+        'okay',
+        'correcto',
+        'exacto',
+        'perfecto',
+      ],
+      'cancelar': [
+        'cancelar',
+        'cancela',
+        'cancelado',
+        'cancelo',
+        'no',
+        'incorrecto',
+        'mal',
+        'error',
+      ],
+      'repetir': [
+        'repetir',
+        'repite',
+        'otra vez',
+        'de nuevo',
+        'nuevamente',
+        'empezar',
+        'comenzar',
+      ],
     };
 
     respuesta = respuesta.toLowerCase().trim();
 
     if (respuesta.contains(palabraClave.toLowerCase())) return true;
-    if (variaciones[palabraClave]?.any((v) => respuesta.contains(v)) ?? false) return true;
-    if (ratio(palabraClave.toLowerCase(), respuesta) > umbralSimilitud) return true;
+    if (variaciones[palabraClave]?.any((v) => respuesta.contains(v)) ?? false)
+      return true;
+    if (ratio(palabraClave.toLowerCase(), respuesta) > umbralSimilitud)
+      return true;
 
-    return variaciones[palabraClave]?.any((v) => ratio(v, respuesta) > umbralSimilitud) ?? false;
+    return variaciones[palabraClave]?.any(
+          (v) => ratio(v, respuesta) > umbralSimilitud,
+        ) ??
+        false;
   }
 
   int? palabrasANumero(String texto) {
     if (texto.isEmpty) return null;
 
     final numeros = {
-      'cero': 0, 'sero': 0, 'xero': 0,
-      'uno': 1, 'un': 1, 'una': 1, 'primero': 1, 'primer': 1,
-      'dos': 2, 'segundo': 2,
-      'tres': 3, 'tercero': 3, 'tercer': 3,
-      'cuatro': 4, 'cuarto': 4,
-      'cinco': 5, 'quinto': 5,
-      'seis': 6, 'sexto': 6,
-      'siete': 7, 'séptimo': 7, 'septimo': 7,
-      'ocho': 8, 'octavo': 8,
-      'nueve': 9, 'noveno': 9,
-      'diez': 10, 'décimo': 10, 'decimo': 10,
+      'cero': 0,
+      'sero': 0,
+      'xero': 0,
+      'uno': 1,
+      'un': 1,
+      'una': 1,
+      'primero': 1,
+      'primer': 1,
+      'dos': 2,
+      'segundo': 2,
+      'tres': 3,
+      'tercero': 3,
+      'tercer': 3,
+      'cuatro': 4,
+      'cuarto': 4,
+      'cinco': 5,
+      'quinto': 5,
+      'seis': 6,
+      'sexto': 6,
+      'siete': 7,
+      'séptimo': 7,
+      'septimo': 7,
+      'ocho': 8,
+      'octavo': 8,
+      'nueve': 9,
+      'noveno': 9,
+      'diez': 10,
+      'décimo': 10,
+      'decimo': 10,
     };
 
-    String textoLimpio = texto.replaceAll(RegExp(r'[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ0-9]'), ' ').toLowerCase().trim();
+    String textoLimpio = texto
+        .replaceAll(RegExp(r'[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ0-9]'), ' ')
+        .toLowerCase()
+        .trim();
 
     final numeroDirecto = int.tryParse(textoLimpio);
     if (numeroDirecto != null) return numeroDirecto;
@@ -727,7 +820,12 @@ class EnhancedVoiceAssistantService {
     return null;
   }
 
-  bool procesarRespuestaPregunta(Pregunta pregunta, String respuesta, int intentos, Map<String, dynamic> respuestaMap) {
+  bool procesarRespuestaPregunta(
+    Pregunta pregunta,
+    String respuesta,
+    int intentos,
+    Map<String, dynamic> respuestaMap,
+  ) {
     String tipo = pregunta.tipoRespuesta ?? 'texto';
     respuesta = respuesta.trim().toLowerCase();
 
@@ -742,10 +840,16 @@ class EnhancedVoiceAssistantService {
     }
   }
 
-  bool _procesarOpciones(Pregunta pregunta, String respuesta, Map<String, dynamic> respuestaMap) {
+  bool _procesarOpciones(
+    Pregunta pregunta,
+    String respuesta,
+    Map<String, dynamic> respuestaMap,
+  ) {
     if (pregunta.opciones == null || pregunta.opciones!.isEmpty) return false;
 
-    final opciones = pregunta.opciones!.map((o) => o.valor.toLowerCase()).toList();
+    final opciones = pregunta.opciones!
+        .map((o) => o.valor.toLowerCase())
+        .toList();
 
     int? numero = palabrasANumero(respuesta);
     if (numero == null) {
@@ -783,7 +887,12 @@ class EnhancedVoiceAssistantService {
     return false;
   }
 
-  bool _procesarNumero(Pregunta pregunta, String respuesta, Map<String, dynamic> respuestaMap, int intentos) {
+  bool _procesarNumero(
+    Pregunta pregunta,
+    String respuesta,
+    Map<String, dynamic> respuestaMap,
+    int intentos,
+  ) {
     int? numero = palabrasANumero(respuesta);
 
     if (numero == null) {
@@ -806,14 +915,14 @@ class EnhancedVoiceAssistantService {
   Future<void> stopAssistant() async {
     isActive = false;
     isListening = false;
-    
+
     try {
       await tts.stop();
       speech.stop();
     } catch (e) {
       debugPrint("❌ Error al detener Maya: $e");
     }
-    
+
     _updateStatus("Maya desactivada");
     listeningController.add(false);
   }
@@ -836,7 +945,6 @@ class EnhancedVoiceAssistantService {
     stopAssistant();
   }
 
-  // Getters para el estado
   bool get isAssistantActive => isActive;
   String get currentStatus => currentMessage;
   List<MonitoreoRespuesta> get currentResponses => List.from(respuestas);

@@ -4,7 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:sotfbee/features/admin/history/controllers/monitoreo_controllers.dart';
 import 'package:sotfbee/features/admin/history/models/monitoreo_models.dart';
-
+import 'package:sotfbee/features/admin/history/presentation/detailis_inspeccion_page.dart';
 
 class HistorialInspeccionesScreenModified extends StatefulWidget {
   @override
@@ -575,13 +575,20 @@ class _HistorialInspeccionesScreenModifiedState
           child: InkWell(
             borderRadius: BorderRadius.circular(20),
             onTap: () {
-              // Navigator.push(
-              //   context,
-              //   MaterialPageRoute(
-              //     builder: (context) =>
-              //         InspeccionDetalleScreenModified(monitoreo: monitoreo),
-              //   ),
-              // );
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChangeNotifierProvider.value(
+                    value: Provider.of<MonitoreoController>(
+                      context,
+                      listen: false,
+                    ),
+                    child: InspeccionDetalleScreenModified(
+                      monitoreo: monitoreo,
+                    ),
+                  ),
+                ),
+              );
             },
             child: Padding(
               padding: EdgeInsets.all(isLargeScreen ? 24.0 : 16.0),

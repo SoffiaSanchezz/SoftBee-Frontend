@@ -4,7 +4,6 @@ import 'package:sotfbee/features/admin/history/models/monitoreo_models.dart';
 import 'package:sotfbee/features/admin/history/service/api_service.dart';
 import 'package:sotfbee/features/admin/history/service/local_storage_service.dart';
 
-
 class MonitoreoController extends ChangeNotifier {
   final ApiService _apiService = ApiService();
   final LocalStorageService _localStorage = LocalStorageService();
@@ -100,7 +99,7 @@ class MonitoreoController extends ChangeNotifier {
       return await _apiService.getMonitoreosByApiario(apiarioId);
     } catch (e) {
       print('Error al obtener monitoreos por apiario: $e');
-      return _monitoreos.where((m) => m.idApiario == apiarioId).toList();
+      return [];
     }
   }
 

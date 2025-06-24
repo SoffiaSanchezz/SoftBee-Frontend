@@ -64,26 +64,23 @@ class _RegisterPageState extends State<RegisterPage> {
       // Preparar datos de apiarios
       final apiariesData = _apiaries.map((apiary) {
         return {
-          "nombre": apiary.nameController.text.trim(),
-          "direccion": apiary.addressController.text.trim(),
-          "cantidad_colmenas": 
-              int.tryParse(apiary.hiveCountController.text) ?? 0,
-          "latitud": 0.0,  // Valor numérico
-          "longitud": 0.0, // Valor numérico
-          "aplica_tratamientos": apiary.appliesTreatments,
+          "apiary_name": apiary.nameController.text.trim(),
+          "location": apiary.addressController.text.trim(),
+          "beehives_count": int.tryParse(apiary.hiveCountController.text) ?? 0,
+          "treatments": apiary.appliesTreatments ? "True" : "False",
         };
       }).toList();
 
-      // Construir cuerpo de la solicitud
       final requestBody = {
         "nombre": nombreCtrl.text.trim(),
         "username": AuthService.generateUsername(correoCtrl.text.trim()),
-        "email": correoCtrl.text.trim().toLowerCase(), // Normalizar a minúsculas
+        "email": correoCtrl.text.trim().toLowerCase(),
         "phone": _limpiarTelefono(telefonoCtrl.text.trim()),
         "password": passCtrl.text,
-        "apiarios": apiariesData,
+        "apiarios":
+            apiariesData, // Mantén el nombre del array como espera el backend
       };
-
+      
       debugPrint("Enviando registro: ${jsonEncode(requestBody)}");
 
       final response = await http.post(

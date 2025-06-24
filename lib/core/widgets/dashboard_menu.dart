@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:sotfbee/features/admin/history/presentation/inspection_history.dart';
+import 'package:sotfbee/features/admin/history/presentation/inspection_history_page.dart';
 import 'package:sotfbee/features/admin/inventory/presentation/inventory_management_page.dart';
-import 'package:sotfbee/features/admin/monitoring/presentation/enhanced_monitoreo_page.dart';
+import 'package:sotfbee/features/admin/monitoring/presentation/main_dashboard_page.dart';
 import 'package:sotfbee/features/admin/reports/presentation/dashboard_reports_page.dart';
 import 'package:sotfbee/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:sotfbee/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:sotfbee/features/auth/data/models/user_model.dart';
-import 'package:sotfbee/features/onboarding/presentation/Landing_Page.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:sotfbee/features/auth/presentation/pages/user_profile_page.dart';
+import 'package:flutter_animate/flutter_animate.dart'; // Importa la página corregida
 
 class MenuScreen extends StatefulWidget {
   @override
@@ -29,8 +29,7 @@ class _EnhancedMenuScreenState extends State<MenuScreen>
       icon: Icons.monitor,
       color: Color(0xFFFBC209),
       description: 'Supervisa el estado de tus colmenas en tiempo real',
-      route: EnhancedMonitoreoScreen()
-      //MonitoreoColmenas(),
+      route: MainMonitoringScreen(),
     ),
     MenuItemData(
       title: 'Inventario',
@@ -38,7 +37,6 @@ class _EnhancedMenuScreenState extends State<MenuScreen>
       color: Color(0xFFFFA500),
       description: 'Gestiona el inventario de tu apiario',
       route: GestionInventarioUpdated(),
-      // InventoryManagementPage(apiaryId: _apiaryId!),
     ),
     MenuItemData(
       title: 'Informes',
@@ -250,57 +248,58 @@ class _EnhancedMenuScreenState extends State<MenuScreen>
               Column(
                 children: [
                   GestureDetector(
-                    onTap: () async {
-                      final token = await AuthStorage.getToken();
-                      if (token == null) {
-                        Navigator.pushNamed(context, '/login');
-                      } else {
-                        Navigator.pushNamed(context, '/profile');
+                    onTap: () {
+                      if (_userProfile != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                UserManagementPage(user: _userProfile),
+                          ),
+                        );
                       }
                     },
-                    child: TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 1.0, end: 1.05),
-                      duration: Duration(seconds: 2),
-                      curve: Curves.easeInOut,
-                      builder: (context, scale, child) {
-                        return Transform.scale(scale: scale, child: child);
-                      },
-                      child: Container(
-                        padding: EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [
-                              Color(0xFFFBC209).withOpacity(0.2),
-                              Colors.transparent,
-                            ],
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [
+                                Color(0xFFFBC209).withOpacity(0.2),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                          child: CircleAvatar(
+                            radius: 30,
+                            backgroundImage:
+                                _userProfile != null &&
+                                    _userProfile!.profilePicture !=
+                                        'default_profile.jpg'
+                                ? NetworkImage(
+                                    'https://softbee-back-end.onrender.com/uploads/${_userProfile!.profilePicture}',
+                                  )
+                                : AssetImage('images/userSoftbee.png')
+                                      as ImageProvider,
                           ),
                         ),
-                        child: CircleAvatar(
-                          radius: 30,
-                          backgroundImage:
-                              _userProfile != null &&
-                                  _userProfile!.profilePicture !=
-                                      'default_profile.jpg'
-                              ? NetworkImage(
-                                  'https://softbee-back-end.onrender.com/uploads/${_userProfile!.profilePicture}',
-                                )
-                              : AssetImage('images/userSoftbee.png')
-                                    as ImageProvider,
-                        ),
-                      ),
+                        SizedBox(height: 6),
+                        // Mostrar primer nombre en lugar del botón de cerrar sesión
+                        if (_userProfile != null)
+                          Text(
+                            _getFirstName(_userProfile!.name),
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF333333),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 6),
-                  if (_userProfile != null)
-                    Text(
-                      _userProfile!.name,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF333333),
-                      ),
-                    ),
+                  // Botón de cerrar sesión en una ubicación diferente
                   IconButton(
                     icon: Icon(Icons.logout, size: 20, color: Colors.red),
                     tooltip: 'Cerrar sesión',
@@ -351,6 +350,11 @@ class _EnhancedMenuScreenState extends State<MenuScreen>
         ],
       ),
     );
+  }
+
+  // Función para obtener solo el primer nombre
+  String _getFirstName(String fullName) {
+    return fullName.split(' ')[0];
   }
 
   Widget _buildInteractiveMenu() {

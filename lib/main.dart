@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:sotfbee/core/widgets/dashboard_menu.dart';
+import 'package:sotfbee/features/admin/history/controllers/monitoreo_controllers.dart';
 import 'package:sotfbee/features/auth/presentation/pages/confirm_reset_page.dart';
 import 'package:sotfbee/features/auth/presentation/pages/login_page.dart';
 import 'package:sotfbee/features/auth/presentation/pages/register_page.dart';
@@ -10,7 +13,15 @@ void main() {
   // Configuración para web
   setUrlStrategy(PathUrlStrategy());
 
-  runApp(const SoftBeeApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => MonitoreoController()),
+        // Agrega aquí otros providers si los necesitas
+      ],
+      child: const SoftBeeApp(),
+    ),
+  );
 }
 
 class SoftBeeApp extends StatelessWidget {
@@ -20,6 +31,29 @@ class SoftBeeApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'SoftBee',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.amber,
+        scaffoldBackgroundColor: const Color(0xFFF8F5E4),
+        fontFamily: 'Poppins',
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF8D6E63),
+          elevation: 0,
+          centerTitle: true,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          filled: true,
+          fillColor: Colors.white,
+        ),
+        buttonTheme: ButtonThemeData(
+          buttonColor: const Color(0xFFFBC209),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+        ),
+      ),
       initialRoute: '/',
       onGenerateRoute: (settings) {
         // Manejo especial para rutas de reset-password
@@ -43,6 +77,8 @@ class SoftBeeApp extends StatelessWidget {
             return MaterialPageRoute(builder: (context) => const LoginPage());
           case '/register':
             return MaterialPageRoute(builder: (context) => RegisterPage());
+          case '/dashboard':
+            return MaterialPageRoute(builder: (context) => MenuScreen());
           case '/forgot-password':
             return MaterialPageRoute(
               builder: (context) => const ForgotPasswordPage(),

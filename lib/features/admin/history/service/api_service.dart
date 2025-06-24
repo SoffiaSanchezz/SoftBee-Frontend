@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:sotfbee/features/admin/history/models/monitoreo_models.dart';
 import 'package:sotfbee/features/admin/history/service/local_storage_service.dart';
+
 class ApiService {
   static const String baseUrl =
       'https://softbee-back-end.onrender.com/api'; // Reemplaza con tu URL de Apiary
@@ -40,8 +40,8 @@ class ApiService {
       }
     } catch (e) {
       print('Error al obtener monitoreos: $e');
-      // Si falla la conexión, obtener datos locales
-      return await _localStorage.getMonitoreos();
+      // Retornar lista vacía en caso de error
+      return [];
     }
   }
 
@@ -63,9 +63,8 @@ class ApiService {
       }
     } catch (e) {
       print('Error al obtener monitoreos por apiario: $e');
-      // Filtrar datos locales por apiario
-      final allMonitoreos = await _localStorage.getMonitoreos();
-      return allMonitoreos.where((m) => m.idApiario == apiarioId).toList();
+      // Retornar lista vacía en caso de error
+      return [];
     }
   }
 
