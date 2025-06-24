@@ -45,23 +45,22 @@ class _RegisterPageState extends State<RegisterPage> {
     correoCtrl.addListener(() => _validateCorreo(correoCtrl.text));
     telefonoCtrl.addListener(() => _validateTelefono(telefonoCtrl.text));
     passCtrl.addListener(() => _validatePassword(passCtrl.text));
-    confirmPassCtrl.addListener(() => _validateConfirmPassword(confirmPassCtrl.text));
+    confirmPassCtrl.addListener(
+      () => _validateConfirmPassword(confirmPassCtrl.text),
+    );
   }
 
   Future<void> registrarUsuario() async {
-    // URL corregida para el endpoint de registro
     final url = Uri.parse("https://softbee-back-end.onrender.com/api/register");
 
     try {
       setState(() => _isLoading = true);
 
-      // Validación de formulario
       if (!_formKey.currentState!.validate()) {
         setState(() => _showValidation = true);
         return;
       }
 
-      // Preparar datos de apiarios
       final apiariesData = _apiaries.map((apiary) {
         return {
           "apiary_name": apiary.nameController.text.trim(),
@@ -77,10 +76,9 @@ class _RegisterPageState extends State<RegisterPage> {
         "email": correoCtrl.text.trim().toLowerCase(),
         "phone": _limpiarTelefono(telefonoCtrl.text.trim()),
         "password": passCtrl.text,
-        "apiarios":
-            apiariesData, // Mantén el nombre del array como espera el backend
+        "apiarios": apiariesData,
       };
-      
+
       debugPrint("Enviando registro: ${jsonEncode(requestBody)}");
 
       final response = await http.post(
@@ -93,17 +91,18 @@ class _RegisterPageState extends State<RegisterPage> {
 
       if (response.statusCode == 201) {
         final decodedResponse = jsonDecode(response.body);
-        
-        // Guardar token automáticamente
+
         if (decodedResponse['token'] != null) {
           await AuthStorage.saveToken(decodedResponse['token']);
           debugPrint("Token guardado: ${decodedResponse['token']}");
         }
-        
+
         _showSuccessDialog(decodedResponse['message'] ?? 'Registro exitoso');
       } else {
         final error = jsonDecode(response.body);
-        _showErrorDialog(error['error'] ?? error['detail'] ?? 'Error en el registro');
+        _showErrorDialog(
+          error['error'] ?? error['detail'] ?? 'Error en el registro',
+        );
       }
     } catch (e) {
       debugPrint("Error en registro: $e");
@@ -562,6 +561,7 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  // CORRECCIÓN PRINCIPAL: Layout móvil mejorado con scroll
   Widget _buildPortraitLayout(
     BuildContext context,
     double width,
@@ -573,101 +573,28 @@ class _RegisterPageState extends State<RegisterPage> {
     final subtitleSize = width * (isSmallScreen ? 0.04 : 0.03);
     final verticalSpacing = height * 0.02;
 
-    return SingleChildScrollView(
-      child: Padding(
-        padding: EdgeInsets.all(width * 0.05),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              height: height * 0.25,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TweenAnimationBuilder(
-                      tween: Tween<double>(begin: 0, end: 1),
-                      duration: const Duration(seconds: 1),
-                      builder: (context, value, child) {
-                        return Transform.scale(scale: value, child: child);
-                      },
-                      child: Container(
-                        height: logoSize,
-                        width: logoSize,
-                        decoration: BoxDecoration(
-                          color: primaryYellow,
-                          borderRadius: BorderRadius.circular(logoSize * 0.3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: darkYellow.withOpacity(0.3),
-                              blurRadius: 15,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.hive,
-                          size: logoSize * 0.4,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: verticalSpacing),
-                    Text(
-                      'Registro SoftBee',
-                      style: GoogleFonts.poppins(
-                        fontSize: titleSize,
-                        fontWeight: FontWeight.bold,
-                        color: textDark,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Form(
-              key: _formKey,
-              child: _buildRegistrationStepper(width, height, subtitleSize),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: verticalSpacing),
-              child: _buildFooter(width, subtitleSize),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLandscapeLayout(
-    BuildContext context,
-    double width,
-    double height,
-  ) {
-    final logoSize = height * 0.25;
-    final titleSize = height * 0.06;
-    final subtitleSize = height * 0.035;
-    final horizontalPadding = width * 0.05;
-    final verticalSpacing = height * 0.03;
-
-    return SingleChildScrollView(
-      child: Padding(
-        padding: EdgeInsets.all(horizontalPadding),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: width * 0.3,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
+    return Column(
+      children: [
+        // Header fijo
+        Container(
+          height: height * 0.2, // Reducido para dar más espacio al contenido
+          padding: EdgeInsets.all(width * 0.05),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TweenAnimationBuilder(
+                  tween: Tween<double>(begin: 0, end: 1),
+                  duration: const Duration(seconds: 1),
+                  builder: (context, value, child) {
+                    return Transform.scale(scale: value, child: child);
+                  },
+                  child: Container(
                     height: logoSize,
                     width: logoSize,
                     decoration: BoxDecoration(
                       color: primaryYellow,
-                      borderRadius: BorderRadius.circular(logoSize * 0.25),
+                      borderRadius: BorderRadius.circular(logoSize * 0.3),
                       boxShadow: [
                         BoxShadow(
                           color: darkYellow.withOpacity(0.3),
@@ -682,32 +609,109 @@ class _RegisterPageState extends State<RegisterPage> {
                       color: Colors.white,
                     ),
                   ),
-                  SizedBox(height: verticalSpacing * 0.5),
-                  Text(
-                    'SoftBee',
-                    style: GoogleFonts.poppins(
-                      fontSize: titleSize,
-                      fontWeight: FontWeight.bold,
-                      color: textDark,
-                      letterSpacing: 1.2,
-                    ),
+                ),
+                SizedBox(height: verticalSpacing * 0.5),
+                Text(
+                  'Registro SoftBee',
+                  style: GoogleFonts.poppins(
+                    fontSize: titleSize,
+                    fontWeight: FontWeight.bold,
+                    color: textDark,
+                    letterSpacing: 1.2,
                   ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Contenido scrolleable
+        Expanded(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: width * 0.05),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  _buildRegistrationStepper(width, height, subtitleSize),
+                  SizedBox(height: verticalSpacing),
+                  _buildFooter(width, subtitleSize),
                 ],
               ),
             ),
-            SizedBox(width: width * 0.05),
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: _buildRegistrationStepper(width, height, subtitleSize),
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
+  Widget _buildLandscapeLayout(
+    BuildContext context,
+    double width,
+    double height,
+  ) {
+    final logoSize = height * 0.25;
+    final titleSize = height * 0.06;
+    final subtitleSize = height * 0.035;
+    final horizontalPadding = width * 0.05;
+    final verticalSpacing = height * 0.03;
+
+    return Row(
+      children: [
+        // Logo lateral fijo
+        Container(
+          width: width * 0.3,
+          padding: EdgeInsets.all(horizontalPadding),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                height: logoSize,
+                width: logoSize,
+                decoration: BoxDecoration(
+                  color: primaryYellow,
+                  borderRadius: BorderRadius.circular(logoSize * 0.25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: darkYellow.withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.hive,
+                  size: logoSize * 0.4,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(height: verticalSpacing * 0.5),
+              Text(
+                'SoftBee',
+                style: GoogleFonts.poppins(
+                  fontSize: titleSize,
+                  fontWeight: FontWeight.bold,
+                  color: textDark,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Contenido scrolleable
+        Expanded(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(horizontalPadding),
+            child: Form(
+              key: _formKey,
+              child: _buildRegistrationStepper(width, height, subtitleSize),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // CORRECCIÓN PRINCIPAL: Stepper con scroll mejorado
   Widget _buildRegistrationStepper(
     double width,
     double height,
@@ -722,6 +726,8 @@ class _RegisterPageState extends State<RegisterPage> {
       child: Stepper(
         type: StepperType.vertical,
         currentStep: _currentStep,
+        physics:
+            const NeverScrollableScrollPhysics(), // Evita conflictos de scroll
         onStepContinue: () {
           final isLastStep = _currentStep == 1;
 
@@ -771,8 +777,11 @@ class _RegisterPageState extends State<RegisterPage> {
         controlsBuilder: (context, details) {
           final isLastStep = _currentStep == 1;
 
-          return Padding(
-            padding: const EdgeInsets.only(top: 20),
+          return Container(
+            margin: const EdgeInsets.only(
+              top: 20,
+              bottom: 20,
+            ), // Más margen para mejor accesibilidad
             child: Row(
               children: [
                 Expanded(
@@ -784,7 +793,8 @@ class _RegisterPageState extends State<RegisterPage> {
                           color: primaryYellow.withOpacity(0.4),
                           blurRadius: 12,
                           offset: const Offset(0, 6),
-                        )],
+                        ),
+                      ],
                       gradient: const LinearGradient(
                         colors: [primaryYellow, accentYellow],
                         begin: Alignment.topLeft,
@@ -800,7 +810,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                        ), // Más padding para mejor toque
                       ),
                       child: _isLoading && isLastStep
                           ? const SizedBox(
@@ -843,7 +855,9 @@ class _RegisterPageState extends State<RegisterPage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                      ), // Más padding para mejor toque
                     ),
                     child: Text(
                       _currentStep > 0 ? 'Atrás' : 'Cancelar',
@@ -998,7 +1012,10 @@ class _RegisterPageState extends State<RegisterPage> {
                   );
                 }).toList(),
                 Padding(
-                  padding: const EdgeInsets.only(top: 16),
+                  padding: const EdgeInsets.only(
+                    top: 16,
+                    bottom: 20,
+                  ), // Más espacio inferior
                   child: OutlinedButton.icon(
                     onPressed: _addApiary,
                     icon: const Icon(Icons.add, color: darkYellow),

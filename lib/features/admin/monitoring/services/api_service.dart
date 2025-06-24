@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:flutter/material.dart';
 import 'package:sotfbee/features/admin/monitoring/models/model.dart';
 
 class ApiService {
@@ -473,7 +472,6 @@ class ApiService {
       final response = await http
           .get(Uri.parse('$_baseUrl/health'), headers: _headers)
           .timeout(Duration(seconds: 10));
-
       return response.statusCode == 200;
     } catch (e) {
       return false;
