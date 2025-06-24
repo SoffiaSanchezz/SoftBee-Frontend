@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:provider/provider.dart';
 import 'package:sotfbee/core/widgets/dashboard_menu.dart';
 import 'package:sotfbee/features/admin/history/controllers/monitoreo_controllers.dart';
@@ -7,12 +9,25 @@ import 'package:sotfbee/features/auth/presentation/pages/login_page.dart';
 import 'package:sotfbee/features/auth/presentation/pages/register_page.dart';
 import 'package:sotfbee/features/auth/presentation/pages/reset_password_page.dart';
 import 'package:sotfbee/features/onboarding/presentation/landing_page.dart';
-import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 
-void main() {
-  // Configuración para web
+// Hive
+import 'package:hive_flutter/hive_flutter.dart';
+
+void main() async {
+  // Necesario para inicializaciones asincrónicas como Hive
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializa Hive en Web
+  if (kIsWeb) {
+    await Hive.initFlutter();
+    // Aquí podrías registrar tus adapters si los usas:
+    // Hive.registerAdapter(ApiarioAdapter());
+  }
+
+  // Configura estrategia de URL para web
   setUrlStrategy(PathUrlStrategy());
 
+  // Inicia la app con providers
   runApp(
     MultiProvider(
       providers: [

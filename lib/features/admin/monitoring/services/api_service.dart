@@ -72,48 +72,67 @@ class ApiService {
   }
 
   // ==================== APIARIOS ====================
-  static Future<List<Apiario>> obtenerApiarios({int? userId}) async {
-    try {
-      String url = '$_baseUrl/apiaries';
-      if (userId != null) {
-        url = '$_baseUrl/users/$userId/apiaries';
-      }
+static Future<List<Apiario>> obtenerApiarios({int? userId}) async {
+  try {
+    final String url = userId != null 
+      ? '$_baseUrl/users/$userId/apiaries' 
+      : '$_baseUrl/apiaries';
 
-      final response = await http
-          .get(Uri.parse(url), headers: _headers)
-          .timeout(_timeout);
+    debugPrint('Obteniendo apiarios desde: $url');
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((json) => Apiario.fromJson(json)).toList();
-      } else {
-        throw Exception('Error al obtener apiarios: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error de conexión: $e');
+    final response = await http
+        .get(Uri.parse(url), headers: _headers)
+        .timeout(_timeout);
+
+    debugPrint('Respuesta obtener apiarios: ${response.statusCode} - ${response.body}');
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => Apiario.fromJson(json)).toList();
+    } else if (response.statusCode == 404) {
+      return []; // Retorna lista vacía si no hay apiarios
+    } else if (response.statusCode == 401) {
+      clearAuthToken();
+      throw Exception('Sesión expirada');
+    } else {
+      throw Exception('Error al obtener apiarios: ${response.statusCode}');
     }
+  } catch (e) {
+    debugPrint('Error en obtenerApiarios: $e');
+    throw Exception('Error de conexión: $e');
   }
+}
 
-  static Future<int> crearApiario(Map<String, dynamic> data) async {
-    try {
-      final response = await http
-          .post(
-            Uri.parse('$_baseUrl/apiaries'),
-            headers: _headers,
-            body: json.encode(data),
-          )
-          .timeout(_timeout);
-
-      if (response.statusCode == 201) {
-        final result = json.decode(response.body);
-        return result['id'] ?? -1;
-      } else {
-        throw Exception('Error al crear apiario: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error de conexión: $e');
+ static Future<int> crearApiario(Map<String, dynamic> data) async {
+  try {
+    // Obtener user_id del token JWT o de la sesión
+    final user = await obtenerPerfil();
+    if (user == null) throw Exception('Usuario no autenticado');
+    
+    if (data['name'] == null) {
+      throw Exception('Nombre es requerido');
     }
+
+    final response = await http.post(
+      Uri.parse('$_baseUrl/apiaries'),
+      headers: _headers,
+      body: json.encode({
+        'name': data['name'],
+        'user_id': user.id,  // Asegurar que se envía el user_id
+        'location': data['location'],
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return json.decode(response.body)['id'];
+    } else {
+      throw Exception('Error: ${response.statusCode} - ${response.body}');
+    }
+  } catch (e) {
+    debugPrint('Error en crearApiario: $e');
+    throw Exception('Error al crear apiario');
   }
+}
 
   static Future<Apiario?> obtenerApiario(int id) async {
     try {
