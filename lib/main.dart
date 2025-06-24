@@ -13,26 +13,29 @@ import 'package:sotfbee/features/onboarding/presentation/landing_page.dart';
 // Hive
 import 'package:hive_flutter/hive_flutter.dart';
 
+// Opcional: para otras plataformas
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
 void main() async {
-  // Necesario para inicializaciones asincrónicas como Hive
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializa Hive en Web
-  if (kIsWeb) {
-    await Hive.initFlutter();
-    // Aquí podrías registrar tus adapters si los usas:
-    // Hive.registerAdapter(ApiarioAdapter());
+  // Inicializa Hive para todas las plataformas
+  await Hive.initFlutter();
+
+  // ✅ Solo si no es Web, se inicializa sqflite_common_ffi
+  if (!kIsWeb) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
   }
 
-  // Configura estrategia de URL para web
+  // Configura la estrategia de URLs limpias en Web
   setUrlStrategy(PathUrlStrategy());
 
-  // Inicia la app con providers
+  // Ejecuta la app
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => MonitoreoController()),
-        // Agrega aquí otros providers si los necesitas
       ],
       child: const SoftBeeApp(),
     ),
@@ -71,7 +74,6 @@ class SoftBeeApp extends StatelessWidget {
       ),
       initialRoute: '/',
       onGenerateRoute: (settings) {
-        // Manejo especial para rutas de reset-password
         if (settings.name?.startsWith('/reset-password') ?? false) {
           final uri = Uri.parse(settings.name!);
           final token = uri.queryParameters['token'] ?? '';
@@ -84,7 +86,6 @@ class SoftBeeApp extends StatelessWidget {
           }
         }
 
-        // Rutas normales
         switch (settings.name) {
           case '/':
             return MaterialPageRoute(builder: (context) => const LandingPage());
