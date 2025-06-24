@@ -769,4 +769,8 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
       ),
     );
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 078e641c6c60585da2ba9fc793e74de27985d07e

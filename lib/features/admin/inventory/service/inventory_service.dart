@@ -16,7 +16,7 @@ class InventoryService {
       final response = await http
           .get(
             Uri.parse(
-              '${ApiConfig.baseUrl}/apiaries/$targetApiaryId/inventory',
+              '${ApiConfig.baseUrl}/inventory',
             ),
             headers: ApiConfig.headers,
           )
@@ -137,7 +137,7 @@ class InventoryService {
       final response = await http
           .get(
             Uri.parse(
-              '${ApiConfig.baseUrl}/apiaries/$targetApiaryId/inventory/search?query=${Uri.encodeComponent(query)}',
+              '${ApiConfig.baseUrl}/inventory/search?query=${Uri.encodeComponent(query)}',
             ),
             headers: ApiConfig.headers,
           )

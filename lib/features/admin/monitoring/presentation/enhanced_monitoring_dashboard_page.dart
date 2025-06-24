@@ -891,6 +891,7 @@
 //     }
 //   }
 // }
+<<<<<<< HEAD
 // // import 'package:flutter/material.dart';
 // // import 'package:google_fonts/google_fonts.dart';
 // // import 'package:flutter_animate/flutter_animate.dart';
@@ -1967,3 +1968,5 @@
 // //     );
 // //   }
 // // }
+=======
+>>>>>>> 078e641c6c60585da2ba9fc793e74de27985d07e

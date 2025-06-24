@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:provider/provider.dart';
 import 'package:sotfbee/core/widgets/dashboard_menu.dart';
 import 'package:sotfbee/features/admin/history/controllers/monitoreo_controllers.dart';
@@ -7,17 +9,33 @@ import 'package:sotfbee/features/auth/presentation/pages/login_page.dart';
 import 'package:sotfbee/features/auth/presentation/pages/register_page.dart';
 import 'package:sotfbee/features/auth/presentation/pages/reset_password_page.dart';
 import 'package:sotfbee/features/onboarding/presentation/landing_page.dart';
-import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 
-void main() {
-  // Configuración para web
+// Hive
+import 'package:hive_flutter/hive_flutter.dart';
+
+// Opcional: para otras plataformas
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializa Hive para todas las plataformas
+  await Hive.initFlutter();
+
+  // ✅ Solo si no es Web, se inicializa sqflite_common_ffi
+  if (!kIsWeb) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+
+  // Configura la estrategia de URLs limpias en Web
   setUrlStrategy(PathUrlStrategy());
 
+  // Ejecuta la app
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => MonitoreoController()),
-        // Agrega aquí otros providers si los necesitas
       ],
       child: const SoftBeeApp(),
     ),
@@ -56,7 +74,6 @@ class SoftBeeApp extends StatelessWidget {
       ),
       initialRoute: '/',
       onGenerateRoute: (settings) {
-        // Manejo especial para rutas de reset-password
         if (settings.name?.startsWith('/reset-password') ?? false) {
           final uri = Uri.parse(settings.name!);
           final token = uri.queryParameters['token'] ?? '';
@@ -69,7 +86,6 @@ class SoftBeeApp extends StatelessWidget {
           }
         }
 
-        // Rutas normales
         switch (settings.name) {
           case '/':
             return MaterialPageRoute(builder: (context) => const LandingPage());
