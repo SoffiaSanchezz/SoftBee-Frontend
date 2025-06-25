@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:sotfbee/features/admin/monitoring/models/model.dart';
+import '../models/enhanced_models.dart';
 
-class ApiService {
+class EnhancedApiService {
   static const String _baseUrl = 'https://softbee-back-end.onrender.com/api';
   static const Duration _timeout = Duration(seconds: 30);
   static String? _authToken;
@@ -23,11 +23,10 @@ class ApiService {
     _authToken = null;
   }
 
-  // ==================== USUARIOS ====================
   static Future<Usuario?> obtenerPerfil() async {
     try {
       final response = await http
-          .get(Uri.parse('$_baseUrl/users/me'), headers: _headers)
+          .get(Uri.parse('$_baseUrl/users'), headers: _headers)
           .timeout(_timeout);
 
       if (response.statusCode == 200) {
@@ -71,67 +70,62 @@ class ApiService {
   }
 
   // ==================== APIARIOS ====================
-static Future<List<Apiario>> obtenerApiarios({int? userId}) async {
-  try {
-    final String url = userId != null 
-      ? '$_baseUrl/users/$userId/apiaries' 
-      : '$_baseUrl/apiaries';
+  static Future<List<Apiario>> obtenerApiarios({int? userId}) async {
+    try {
+      final String url = userId != null
+          ? '$_baseUrl/users/$userId/apiaries'
+          : '$_baseUrl/apiaries';
 
-    debugPrint('Obteniendo apiarios desde: $url');
+      final response = await http
+          .get(Uri.parse(url), headers: _headers)
+          .timeout(_timeout);
 
-    final response = await http
-        .get(Uri.parse(url), headers: _headers)
-        .timeout(_timeout);
-
-    debugPrint('Respuesta obtener apiarios: ${response.statusCode} - ${response.body}');
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return data.map((json) => Apiario.fromJson(json)).toList();
-    } else if (response.statusCode == 404) {
-      return []; // Retorna lista vacía si no hay apiarios
-    } else if (response.statusCode == 401) {
-      clearAuthToken();
-      throw Exception('Sesión expirada');
-    } else {
-      throw Exception('Error al obtener apiarios: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => Apiario.fromJson(json)).toList();
+      } else if (response.statusCode == 404) {
+        return [];
+      } else if (response.statusCode == 401) {
+        clearAuthToken();
+        throw Exception('Sesión expirada');
+      } else {
+        throw Exception('Error al obtener apiarios: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: $e');
     }
-  } catch (e) {
-    debugPrint('Error en obtenerApiarios: $e');
-    throw Exception('Error de conexión: $e');
   }
-}
 
- static Future<int> crearApiario(Map<String, dynamic> data) async {
-  try {
-    // Obtener user_id del token JWT o de la sesión
-    final user = await obtenerPerfil();
-    if (user == null) throw Exception('Usuario no autenticado');
-    
-    if (data['name'] == null) {
-      throw Exception('Nombre es requerido');
+  static Future<int> crearApiario(Map<String, dynamic> data) async {
+    try {
+      final user = await obtenerPerfil();
+      if (user == null) throw Exception('Usuario no autenticado');
+
+      if (data['name'] == null && data['nombre'] == null) {
+        throw Exception('Nombre es requerido');
+      }
+
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/apiaries'),
+            headers: _headers,
+            body: json.encode({
+              'name': data['name'] ?? data['nombre'],
+              'user_id': user.id,
+              'location': data['location'] ?? data['ubicacion'],
+            }),
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode == 201) {
+        return json.decode(response.body)['id'];
+      } else {
+        throw Exception('Error: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error al crear apiario: $e');
     }
-
-    final response = await http.post(
-      Uri.parse('$_baseUrl/apiaries'),
-      headers: _headers,
-      body: json.encode({
-        'name': data['name'],
-        'user_id': user.id,  // Asegurar que se envía el user_id
-        'location': data['location'],
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      return json.decode(response.body)['id'];
-    } else {
-      throw Exception('Error: ${response.statusCode} - ${response.body}');
-    }
-  } catch (e) {
-    debugPrint('Error en crearApiario: $e');
-    throw Exception('Error al crear apiario');
   }
-}
 
   static Future<Apiario?> obtenerApiario(int id) async {
     try {
@@ -200,10 +194,10 @@ static Future<List<Apiario>> obtenerApiarios({int? userId}) async {
         final List<dynamic> data = json.decode(response.body);
         return data.map((json) => Colmena.fromJson(json)).toList();
       } else {
-        throw Exception('Error al obtener colmenas: ${response.statusCode}');
+        return []; // Retorna lista vacía si no hay colmenas
       }
     } catch (e) {
-      throw Exception('Error de conexión: $e');
+      return []; // Retorna lista vacía en caso de error
     }
   }
 
@@ -247,10 +241,10 @@ static Future<List<Apiario>> obtenerApiarios({int? userId}) async {
         final List<dynamic> data = json.decode(response.body);
         return data.map((json) => Pregunta.fromJson(json)).toList();
       } else {
-        throw Exception('Error al obtener preguntas: ${response.statusCode}');
+        return []; // Retorna lista vacía si no hay preguntas
       }
     } catch (e) {
-      throw Exception('Error de conexión: $e');
+      return []; // Retorna lista vacía en caso de error
     }
   }
 
@@ -362,12 +356,10 @@ static Future<List<Apiario>> obtenerApiarios({int? userId}) async {
         final List<dynamic> data = json.decode(response.body);
         return data.map((json) => NotificacionReina.fromJson(json)).toList();
       } else {
-        throw Exception(
-          'Error al obtener notificaciones: ${response.statusCode}',
-        );
+        return [];
       }
     } catch (e) {
-      throw Exception('Error de conexión: $e');
+      return [];
     }
   }
 
@@ -405,80 +397,6 @@ static Future<List<Apiario>> obtenerApiarios({int? userId}) async {
 
       if (response.statusCode != 200) {
         throw Exception('Error al marcar notificación: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error de conexión: $e');
-    }
-  }
-
-  static Future<void> marcarVariasNotificacionesComoLeidas(
-    List<int> notificacionIds,
-  ) async {
-    try {
-      final response = await http
-          .put(
-            Uri.parse('$_baseUrl/queen-notifications/bulk-read'),
-            headers: _headers,
-            body: json.encode({'notification_ids': notificacionIds}),
-          )
-          .timeout(_timeout);
-
-      if (response.statusCode != 200) {
-        throw Exception(
-          'Error al marcar notificaciones: ${response.statusCode}',
-        );
-      }
-    } catch (e) {
-      throw Exception('Error de conexión: $e');
-    }
-  }
-
-  // ==================== MONITOREO ====================
-  static Future<int> crearMonitoreo(Map<String, dynamic> data) async {
-    try {
-      final response = await http
-          .post(
-            Uri.parse('$_baseUrl/monitoreos'),
-            headers: _headers,
-            body: json.encode(data),
-          )
-          .timeout(_timeout);
-
-      if (response.statusCode == 201) {
-        final result = json.decode(response.body);
-        return result['id'] ?? -1;
-      } else {
-        throw Exception('Error al crear monitoreo: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error de conexión: $e');
-    }
-  }
-
-  static Future<List<Monitoreo>> obtenerMonitoreos({
-    int? apiarioId,
-    int? colmenaId,
-  }) async {
-    try {
-      String url = '$_baseUrl/monitoreos';
-      List<String> params = [];
-
-      if (apiarioId != null) params.add('apiario_id=$apiarioId');
-      if (colmenaId != null) params.add('colmena_id=$colmenaId');
-
-      if (params.isNotEmpty) {
-        url += '?${params.join('&')}';
-      }
-
-      final response = await http
-          .get(Uri.parse(url), headers: _headers)
-          .timeout(_timeout);
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((json) => Monitoreo.fromJson(json)).toList();
-      } else {
-        throw Exception('Error al obtener monitoreos: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error de conexión: $e');
@@ -524,12 +442,20 @@ static Future<List<Apiario>> obtenerApiarios({int? userId}) async {
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
-        throw Exception(
-          'Error al obtener estadísticas: ${response.statusCode}',
-        );
+        return {
+          'total_apiarios': 0,
+          'total_colmenas': 0,
+          'total_monitoreos': 0,
+          'monitoreos_pendientes': 0,
+        };
       }
     } catch (e) {
-      throw Exception('Error de conexión: $e');
+      return {
+        'total_apiarios': 0,
+        'total_colmenas': 0,
+        'total_monitoreos': 0,
+        'monitoreos_pendientes': 0,
+      };
     }
   }
 }

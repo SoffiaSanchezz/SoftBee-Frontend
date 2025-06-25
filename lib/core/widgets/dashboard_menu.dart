@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sotfbee/features/admin/history/presentation/inspection_history_page.dart';
 import 'package:sotfbee/features/admin/inventory/presentation/inventory_management_page.dart';
-import 'package:sotfbee/features/admin/monitoring/presentation/main_dashboard_page.dart';
+import 'package:sotfbee/features/admin/monitoring/presentation/main_monitoring_page.dart';
 import 'package:sotfbee/features/admin/reports/presentation/dashboard_reports_page.dart';
 import 'package:sotfbee/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:sotfbee/features/auth/data/datasources/auth_remote_datasource.dart';
