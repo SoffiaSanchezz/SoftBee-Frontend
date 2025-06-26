@@ -30,12 +30,15 @@ class EnhancedCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: isCompact ? 1 : 2,
-      margin: EdgeInsets.symmetric(horizontal: 2, vertical: isCompact ? 3 : 6),
+      margin: EdgeInsets.symmetric(
+        horizontal: 2,
+        vertical: isCompact ? 3 : 6,
+      ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: showBorder
-            ? BorderSide(color: color.withOpacity(0.3), width: 1)
-            : BorderSide.none,
+        side: showBorder 
+          ? BorderSide(color: color.withOpacity(0.3), width: 1)
+          : BorderSide.none,
       ),
       child: InkWell(
         onTap: onTap,
@@ -47,7 +50,10 @@ class EnhancedCardWidget extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Colors.white, color.withOpacity(0.03)],
+              colors: [
+                Colors.white,
+                color.withOpacity(0.03),
+              ],
             ),
           ),
           child: Row(
@@ -60,7 +66,11 @@ class EnhancedCardWidget extends StatelessWidget {
                   color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: color, size: isCompact ? 16 : 20),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: isCompact ? 16 : 20,
+                ),
               ).animate().scale(
                 delay: Duration(milliseconds: animationDelay),
                 duration: 400.ms,
@@ -106,7 +116,10 @@ class EnhancedCardWidget extends StatelessWidget {
               ),
 
               // Trailing widget
-              if (trailing != null) ...[SizedBox(width: 8), trailing!],
+              if (trailing != null) ...[
+                SizedBox(width: 8),
+                trailing!,
+              ],
             ],
           ),
         ),
@@ -145,82 +158,81 @@ class StatCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child:
-          Container(
-                padding: EdgeInsets.all(isCompact ? 12 : 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: color.withOpacity(0.2), width: 1),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withOpacity(0.08),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
+      child: Container(
+        padding: EdgeInsets.all(isCompact ? 12 : 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: color.withOpacity(0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.08),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: isCompact ? 28 : 36,
+              height: isCompact ? 28 : 36,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [color, color.withOpacity(0.7)],
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                          width: isCompact ? 28 : 36,
-                          height: isCompact ? 28 : 36,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [color, color.withOpacity(0.7)],
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            icon,
-                            color: Colors.white,
-                            size: isCompact ? 14 : 18,
-                          ),
-                        )
-                        .animate(
-                          onPlay: (controller) =>
-                              controller.repeat(reverse: true),
-                        )
-                        .scale(
-                          begin: Offset(1, 1),
-                          end: Offset(1.1, 1.1),
-                          duration: 2000.ms,
-                        ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: Colors.white,
+                size: isCompact ? 14 : 18,
+              ),
+            ).animate(
+              onPlay: (controller) => controller.repeat(reverse: true),
+            ).scale(
+              begin: Offset(1, 1),
+              end: Offset(1.1, 1.1),
+              duration: 2000.ms,
+            ),
 
-                    SizedBox(height: 8),
+            SizedBox(height: 8),
 
-                    Text(
-                      value,
-                      style: GoogleFonts.poppins(
-                        fontSize: isCompact ? 16 : 20,
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                      ),
-                    ),
+            Text(
+              value,
+              style: GoogleFonts.poppins(
+                fontSize: isCompact ? 16 : 20,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
 
-                    Text(
-                      label,
-                      style: GoogleFonts.poppins(
-                        fontSize: isCompact ? 9 : 11,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              )
-              .animate()
-              .fadeIn(
-                delay: Duration(milliseconds: animationDelay),
-                duration: 600.ms,
-              )
-              .slideY(begin: 0.2, end: 0),
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: isCompact ? 9 : 11,
+                color: Colors.black54,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ).animate().fadeIn(
+        delay: Duration(milliseconds: animationDelay),
+        duration: 600.ms,
+      ).slideY(
+        begin: 0.2,
+        end: 0,
+      ),
     );
   }
 }
@@ -242,15 +254,13 @@ class LoadingWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.hive, size: 48, color: color),
-              )
-              .animate(onPlay: (controller) => controller.repeat())
-              .rotate(duration: 2000.ms),
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.hive, size: 48, color: color),
+          ).animate(onPlay: (controller) => controller.repeat()).rotate(duration: 2000.ms),
 
           SizedBox(height: 24),
 
@@ -307,8 +317,15 @@ class EmptyStateWidget extends StatelessWidget {
                 color: color.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 48, color: color.withOpacity(0.7)),
-            ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+              child: Icon(
+                icon,
+                size: 48,
+                color: color.withOpacity(0.7),
+              ),
+            ).animate().scale(
+              duration: 600.ms,
+              curve: Curves.easeOutBack,
+            ),
 
             SizedBox(height: 24),
 
@@ -341,7 +358,9 @@ class EmptyStateWidget extends StatelessWidget {
                 icon: Icon(Icons.add, size: 18),
                 label: Text(
                   actionText!,
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: color,
@@ -440,15 +459,16 @@ class ActionButtonWidget extends StatelessWidget {
           horizontal: isCompact ? 12 : 16,
           vertical: isCompact ? 8 : 10,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
         elevation: 1,
       ),
     );
   }
 }
 
-class CustomAppBarWidget extends StatelessWidget
-    implements PreferredSizeWidget {
+class CustomAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final bool isConnected;
   final VoidCallback? onSync;
@@ -482,7 +502,10 @@ class CustomAppBarWidget extends StatelessWidget
       backgroundColor: Color(0xFFFF9800),
       elevation: 0,
       actions: [
-        ConnectionStatusWidget(isConnected: isConnected, onRetry: onSync),
+        ConnectionStatusWidget(
+          isConnected: isConnected,
+          onRetry: onSync,
+        ),
         if (onSync != null)
           IconButton(
             icon: Icon(Icons.sync, color: Colors.white),
